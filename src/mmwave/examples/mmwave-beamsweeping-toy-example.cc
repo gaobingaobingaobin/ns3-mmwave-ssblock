@@ -349,8 +349,8 @@ main (int argc, char *argv[])
   ptr_mmWave->AddMmWaveNetDevicesToPhy();
 
   // Initialize channels between eNBs and UEs
-  ptr_mmWave->InitiateChannel(ueNetDev, enbNetDev);
-//  ptr_mmWave->AttachToClosestEnb (ueNetDev, enbNetDev);	// If I disable this, MIBs are not received
+//  ptr_mmWave->InitiateChannel(ueNetDev, enbNetDev);
+  ptr_mmWave->AttachToClosestEnb (ueNetDev, enbNetDev);	// If I disable this, MIBs are not received
 
   ptr_mmWave->EnableTraces();
 

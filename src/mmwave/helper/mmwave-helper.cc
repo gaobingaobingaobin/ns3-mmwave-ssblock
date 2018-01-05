@@ -142,7 +142,8 @@ MmWaveHelper::DoInitialize()
 	m_phyMacCommon = CreateObject <MmWavePhyMacCommon> () ;
 	// Carlos modification
 	MmWavePhyMacCommon::SubCarrierSpacing scs = MmWavePhyMacCommon::SCS120KHz;
-	m_phyMacCommon->SetScs(scs);
+	m_phyMacCommon->SetScs(scs, true);
+	m_phyMacCommon->SetSsBurstSetParams(MmWavePhyMacCommon::ms20,MmWavePhyMacCommon::ms10);
 	// End of Carlos modification
 
 	if (!m_pathlossModelType.empty ())

@@ -198,7 +198,7 @@ MmWavePhyMacCommon::MmWavePhyMacCommon ()
 }
 
 // Carlos modification
-void MmWavePhyMacCommon::SetScs (SubCarrierSpacing scs)
+void MmWavePhyMacCommon::SetScs (SubCarrierSpacing scs, bool paternFlag)
 {
 	m_scs = scs;
 	m_symbolsPerSlot = 14;
@@ -234,10 +234,27 @@ void MmWavePhyMacCommon::SetScs (SubCarrierSpacing scs)
 		m_slotPeriod = 15.625;
 		break;
 	}
+	if(!paternFlag)	//disables the SCS pattern and all slots transmit an SS/PBCH block
+	{
+		m_ssBurstPattern.clear();
+	}
 	m_symbolsPerSubframe = m_symbolsPerSlot * m_slotsPerSubframe;
-	m_maxSsBlockSlotId = 5 * m_slotsPerSubframe;
 }
 
+
+void
+MmWavePhyMacCommon::SetSsBurstSetParams(SsBurstPeriods ssBurstSetPeriod, SsBurstPeriods ssBurstPeriod)
+{
+
+	if(ssBurstPeriod > ssBurstSetPeriod)
+	{
+		NS_LOG_ERROR("ssBurstPeriod cannot be larger than ssBurstSetPeriod. Check the code.");
+	}
+	m_ssBurstPeriod = ssBurstPeriod;
+	m_ssBurstSetPeriod = ssBurstSetPeriod;
+	m_maxSsBlockSlotId =  m_slotsPerSubframe * ssBurstPeriod;
+
+}
 
 bool MmWavePhyMacCommon::GetSsBlockSlotStatus ()
 {

@@ -182,6 +182,8 @@ MmWaveEnbPhy::DoInitialize (void)
 //	Ptr<MmWaveBeamManagement> mng = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement->InitializeBeamSweepingTx(beamPeriodicityTime);
+	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
+	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
 	// End of Carlos modification
 
 	MmWavePhy::DoInitialize ();
@@ -523,9 +525,11 @@ MmWaveEnbPhy::StartSlot (void)
 	m_phySapUser->SubframeIndication (SfnSf (m_frameNum, m_sfNum, m_slotNum));  // trigger MAC
 
 	// Carlos modification
-	if (m_phyMacConfig->GetSsBlockSlotStatus())	//Check if the current slot contains a SS block to transmit
+	//Check if the current slot contains an SS block to transmit and the maximum number of transmissions in the SS Burst Set has not been exceeded
+	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)
 	{
 		m_beamManagement->BeamSweepStepTx();
+		m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
 	}
 	m_phyMacConfig->IncreaseCurrentSsSlotId();
 	// End of Carlos modification

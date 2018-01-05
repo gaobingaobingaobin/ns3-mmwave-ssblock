@@ -162,6 +162,8 @@ MmWaveUePhy::DoInitialize (void)
 	Time beamUpdatePeriodTime = NanoSeconds(1000*beamUpdatePeriod);
 	m_beamManagement = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement->InitializeBeamSweepingRx(beamUpdatePeriodTime);
+	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
+	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
 	// End of Carlos modification
 	MmWavePhy::DoInitialize ();
 
@@ -639,7 +641,7 @@ MmWaveUePhy::StartSlot ()
 
 	// Carlos modification
 	// Do the beam management: increase ss block beam id to select the next beam to transmit the ss block
-	if (m_phyMacConfig->GetSsBlockSlotStatus())	//Check if the current slot contains a SS block to transmit
+	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)	//Check if the current slot contains a SS block to transmit
 	{
 		Architecture phyArch = GetPhyArchitecture();
 
@@ -656,14 +658,12 @@ MmWaveUePhy::StartSlot ()
 			// Call to update beam sweeping beam id if it is time to do so
 			if (m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate() == 64) // FIXME: TX codebook length is 64
 			{
-				uint16_t SsBeamIdBeforeUpdate = m_beamManagement->GetCurrentBeamId();
 				m_beamManagement->BeamSweepStepRx();
-				m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
-				uint16_t SsBeamIdAfterUpdate = m_beamManagement->GetCurrentBeamId();
-	//		}
+
+//				m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
 				// If ss slot id is zero for the first time get the best serving enb and pair of beams
 				// This means that all beams have been measured and the UE selects the best one
-				if(SsBeamIdAfterUpdate == 0 && SsBeamIdBeforeUpdate != SsBeamIdAfterUpdate)
+				if(m_beamManagement->GetCurrentBeamId() == 0)
 				{
 					m_beamManagement->UpdateBestScannedEnb();
 					UpdateChannelMap();

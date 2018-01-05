@@ -840,8 +840,39 @@ public:
 		SCS960KHz = 960000
 	};
 
+	// SS burst and SS burst set period in ms
+	typedef enum SsBurstPeriods
+	{
+		ms5 = 5,
+		ms10 = 10,
+		ms20 = 20,
+		ms40 = 40,
+		ms80 = 80,
+		ms160 = 160
+	}SsBurstPeriods;
+
+	/*
+	 * \brief Populates the SCS-related information.
+	 * \param scs: determines the SCS for the whole system bandwidth
+	 * \param paternFlag: If set to false, it disables the SS block mapping according to 3GPP symbol starting indexes in TS 38.213 and SS blocks are transmitted in every slot
+	 */
 	void
-	SetScs (SubCarrierSpacing scs);
+	SetScs (SubCarrierSpacing scs, bool paternFlag);
+
+	void
+	SetSsBurstSetParams(SsBurstPeriods ssBurstSetPeriod, SsBurstPeriods ssBurstPeriod);
+
+	inline SsBurstPeriods
+	GetSsBurstSetPeriod ()
+	{
+		return m_ssBurstSetPeriod;
+	}
+
+	inline SsBurstPeriods
+	GetSsBurstPeriod ()
+	{
+		return m_ssBurstPeriod;
+	}
 
 	bool
 	GetSsBlockSlotStatus ();
@@ -936,6 +967,9 @@ private:
 	//TODO: the m_ssBurstPattern only supports one SS block per slot, and the TS 38.213 supports one, two or three.
 	uint16_t m_currentSsBlockSlotId;		// Current slot ID within a half frame (5 ms)
 	uint16_t m_maxSsBlockSlotId;			// Maximum number of slot ID, determined by the SCS: 5 times the number of slots per subframe
+	// The following 2 variables determine the SS Burst Set structure
+	SsBurstPeriods m_ssBurstPeriod;
+	SsBurstPeriods m_ssBurstSetPeriod;
 
 };
 
