@@ -552,11 +552,11 @@ MmWave3gppChannel::DoCalcRxPowerSpectralDensity (Ptr<const SpectrumValue> txPsd,
 			//delete the channel parameter to cause the channel to be updated again.
 			//The m_updatePeriod can be configured to be relatively large in order to disable updates.
 			//FIXME: Channel updates are disabled because the channel is erased and the beam sweeping needs it
-//			if(m_updatePeriod.GetMilliSeconds() > 0)
-//			{
-//				NS_LOG_INFO("Time " << Simulator::Now().GetSeconds() << " schedule delete for a " << a->GetPosition() << " b " << b->GetPosition());
-//				Simulator::Schedule (m_updatePeriod, &MmWave3gppChannel::DeleteChannel,this,a,b);
-//			}
+			if(m_updatePeriod.GetMilliSeconds() > 0)
+			{
+				NS_LOG_INFO("Time " << Simulator::Now().GetSeconds() << " schedule delete for a " << a->GetPosition() << " b " << b->GetPosition());
+				Simulator::Schedule (m_updatePeriod, &MmWave3gppChannel::DeleteChannel,this,a,b);
+			}
 		}
 
 		double distance3D = a->GetDistanceFrom(b);
@@ -1104,6 +1104,21 @@ MmWave3gppChannel::DeleteChannel(Ptr<const MobilityModel> a, Ptr<const MobilityM
 	NS_ASSERT_MSG(m_channelMap.find(std::make_pair(dev1,dev2)) != m_channelMap.end(), "Channel not found");
 	params->m_channel.clear();
 	m_channelMap[std::make_pair(dev1,dev2)] = params;
+
+	/*
+	 * Patch to support beam sweeping.
+	 * If the channel is deleted the simulator crashes because the new channel is not created in time.
+	 * We force now the creation of the new channel
+	 */
+	std::vector<int> listOfSubchannels;
+	for (unsigned i = 0; i < m_phyMacConfig->GetTotalNumChunk(); i++)
+	{
+		listOfSubchannels.push_back(i);
+	}
+	Ptr<const SpectrumValue> fakePsd =
+		MmWaveSpectrumValueHelper::CreateTxPowerSpectralDensity (m_phyMacConfig, 0, listOfSubchannels);
+	DoCalcRxPowerSpectralDensity(fakePsd, a, b);
+
 }
 
 Ptr<Params3gpp>
