@@ -253,7 +253,7 @@ void MmWaveBeamManagement::UpdateBestScannedEnb()
 		SetBestScannedEnb(bestScannedBeamPair);
 	}
 	Time currentTime = Simulator::Now();
-	NS_LOG_INFO("[" << currentTime <<"]Best beam pair update: tx=" << bestScannedBeamPair.m_txBeamId <<
+	NS_LOG_INFO("[" << currentTime.GetSeconds() <<"]Best beam pair update: tx=" << bestScannedBeamPair.m_txBeamId <<
 			" rx=" << bestScannedBeamPair.m_rxBeamId <<
 			" avgSinr=" << bestScannedBeamPair.m_avgSinr);
 //	return bestScannedBeamPair;

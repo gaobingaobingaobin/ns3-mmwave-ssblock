@@ -64,27 +64,27 @@ ChangeSpeed(Ptr<Node>  n, Vector speed)
 
 
 static void
-Traces(uint16_t nodeNum)
+Traces(uint16_t nodeNum, std::string protocol)
 {
 	AsciiTraceHelper asciiTraceHelper;
 
 	std::ostringstream pathCW;
-	pathCW<<"/NodeList/"<<nodeNum+1<<"/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow";
+	pathCW<<"/NodeList/"<<nodeNum+2<<"/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow";
 
 	std::ostringstream fileCW;
-	fileCW<<"UE-"<<nodeNum+1<<"-TCP-CWND.txt";
+	fileCW<<protocol<<"-"<<nodeNum+1<<"-TCP-CWND.txt";
 
 	std::ostringstream pathRTT;
-	pathRTT<<"/NodeList/"<<nodeNum+1<<"/$ns3::TcpL4Protocol/SocketList/0/RTT";
+	pathRTT<<"/NodeList/"<<nodeNum+2<<"/$ns3::TcpL4Protocol/SocketList/0/RTT";
 
 	std::ostringstream fileRTT;
-	fileRTT<<"UE-"<<nodeNum+1<<"-TCP-RTT.txt";
+	fileRTT<<protocol<<"-"<<nodeNum+1<<"-TCP-RTT.txt";
 
 	std::ostringstream pathRCWnd;
-	pathRCWnd<<"/NodeList/"<<nodeNum+1<<"/$ns3::TcpL4Protocol/SocketList/0/RWND";
+	pathRCWnd<<"/NodeList/"<<nodeNum+2<<"/$ns3::TcpL4Protocol/SocketList/0/RWND";
 
 	std::ostringstream fileRCWnd;
-	fileRCWnd<<"UE-"<<nodeNum+1<<"-TCP-RCWND.txt";
+	fileRCWnd<<protocol<<"-"<<nodeNum+1<<"-TCP-RCWND.txt";
 
 	Ptr<OutputStreamWrapper> stream1 = asciiTraceHelper.CreateFileStream (fileCW.str ().c_str ());
 	Config::ConnectWithoutContext (pathCW.str ().c_str (), MakeBoundCallback(&CwndChange, stream1));
@@ -104,18 +104,24 @@ main (int argc, char *argv[])
 
   // LogComponentEnable("TcpCongestionOps", LOG_LEVEL_INFO);
   // LogComponentEnable("TcpSocketBase", LOG_LEVEL_INFO);
+    LogComponentEnable ("MmWaveBeamManagement", LOG_LEVEL_INFO);
+    //LogComponentEnable ("LteUeRrc", LOG_LEVEL_ALL);
 
-	uint16_t nodeNum = 3;
-	double simStopTime = 20;
+
+	uint16_t nodeNum = 1;
+	double simStopTime = 10;
 	bool harqEnabled = true;
 	bool rlcAmEnabled = true;
-	std::string protocol = "TcpNewReno";
-	int bufferSize = 1000 *1000 * 3.5 * 0.4;
+	std::string protocol = "TcpCubic";
+	//int bufferSize = 1000 *1000 * 3.5 * 0.4;
+	int bufferSize = 85*1000*1.1;
+	int packetSize = 14000;
+	int p2pDelay = 9;
 	// This 3GPP channel model example only demonstrate the pathloss model. The fast fading model is still in developing.
 
 	//The available channel scenarios are 'RMa', 'UMa', 'UMi-StreetCanyon', 'InH-OfficeMixed', 'InH-OfficeOpen', 'InH-ShoppingMall'
 	std::string scenario = "UMa";
-	std::string condition = "n";
+	std::string condition = "a";
 
 	CommandLine cmd;
 //	cmd.AddValue("numEnb", "Number of eNBs", numEnb);
@@ -126,17 +132,18 @@ main (int argc, char *argv[])
 	cmd.AddValue("rlcAm", "Enable RLC-AM", rlcAmEnabled);
 	cmd.AddValue("protocol", "TCP protocol", protocol);
 	cmd.AddValue("bufferSize", "buffer size", bufferSize);
+	cmd.AddValue("packetSize", "packet size", packetSize);
+	cmd.AddValue("p2pDelay","delay between server and PGW", p2pDelay);
 	cmd.Parse(argc, argv);
 
 	//Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (65535));
-	int PacketSize = 60000;
 	Config::SetDefault ("ns3::TcpSocketBase::MinRto", TimeValue (MilliSeconds (200)));
 	Config::SetDefault ("ns3::Ipv4L3Protocol::FragmentExpirationTimeout", TimeValue (Seconds (1)));
-	Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (PacketSize));
+	Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (packetSize));
 	Config::SetDefault ("ns3::TcpSocket::DelAckCount", UintegerValue (1));
 
-	Config::SetDefault ("ns3::TcpSocket::SndBufSize", UintegerValue (131072*200));
-	Config::SetDefault ("ns3::TcpSocket::RcvBufSize", UintegerValue (131072*200));
+	Config::SetDefault ("ns3::TcpSocket::SndBufSize", UintegerValue (131072*400));
+	Config::SetDefault ("ns3::TcpSocket::RcvBufSize", UintegerValue (131072*400));
 
 
 	Config::SetDefault ("ns3::MmWaveHelper::RlcAmEnabled", BooleanValue(rlcAmEnabled));
@@ -149,15 +156,17 @@ main (int argc, char *argv[])
 	Config::SetDefault ("ns3::LteRlcAm::StatusProhibitTimer", TimeValue(MilliSeconds(1.0)));
 	Config::SetDefault ("ns3::LteRlcAm::ReportBufferStatusTimer", TimeValue(MilliSeconds(2.0)));
 	Config::SetDefault ("ns3::LteRlcAm::MaxTxBufferSize", UintegerValue (bufferSize));
-    Config::SetDefault ("ns3::Queue::MaxPackets", UintegerValue (100*1000));
+    //Config::SetDefault ("ns3::QueueBase::MaxPackets", UintegerValue (100*1000));
 
-	Config::SetDefault ("ns3::CoDelQueueDisc::Mode", StringValue ("QUEUE_MODE_PACKETS"));
-    Config::SetDefault ("ns3::CoDelQueueDisc::MaxPackets", UintegerValue (50000));
+	//Config::SetDefault ("ns3::CoDelQueueDisc::Mode", StringValue ("QUEUE_DISC_MODE_PACKETS"));
+    //Config::SetDefault ("ns3::CoDelQueueDisc::MaxPackets", UintegerValue (50000));
     //Config::SetDefault ("ns3::CoDelQueue::Interval", StringValue ("500ms"));
     //Config::SetDefault ("ns3::CoDelQueue::Target", StringValue ("50ms"));
 
+    //Config::SetDefault ("ns3::LteEnbRrc::SecondaryCellHandoverMode", EnumValue(LteEnbRrc::FIXED_TTT));
 
-	//Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpCubic::GetTypeId ()));
+//Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpCubic::GetTypeId ()));
+
     if(protocol == "TcpNewReno")
     {
 	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpNewReno::GetTypeId ()));
@@ -166,25 +175,68 @@ main (int argc, char *argv[])
     {
     	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpVegas::GetTypeId ()));
     }
+    else if (protocol == "TcpHighSpeed")
+    {
+    	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpHighSpeed::GetTypeId ()));
+
+    }
+    else if (protocol == "TcpCubic")
+    {
+    	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpCubic::GetTypeId ()));
+
+    }
+    else if (protocol == "TcpIllinois")
+    {
+    	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpIllinois::GetTypeId ()));
+
+    }
+    else if (protocol == "TcpHybla")
+    {
+    	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpHybla::GetTypeId ()));
+
+    }
+    else if (protocol == "TcpVeno")
+    {
+    	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpVeno::GetTypeId ()));
+
+    }
+    else if (protocol == "TcpWestwood")
+    {
+    	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpWestwood::GetTypeId ()));
+
+    }
+    else if (protocol == "TcpYeah")
+    {
+    	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpYeah::GetTypeId ()));
+
+    }
     else
     {
 		std::cout<<protocol<<" Unkown protocol.\n";
 		return 1;
     }
+	Config::SetDefault ("ns3::TcpVegas::Alpha", UintegerValue (20));
+	Config::SetDefault ("ns3::TcpVegas::Beta", UintegerValue (40));
+	Config::SetDefault ("ns3::TcpVegas::Gamma", UintegerValue (2));
+
 
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::ChannelCondition", StringValue(condition));
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Scenario", StringValue(scenario));
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::OptionalNlos", BooleanValue(false));
-	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Shadowing", BooleanValue(true)); // enable or disable the shadowing effect
+	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Shadowing", BooleanValue(false)); // enable or disable the shadowing effect
+	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::InCar", BooleanValue(false)); // enable or disable the shadowing effect
+
+
 
 	Config::SetDefault ("ns3::MmWave3gppChannel::UpdatePeriod", TimeValue (MilliSeconds (100))); // Set channel update period, 0 stands for no update.
 	Config::SetDefault ("ns3::MmWave3gppChannel::CellScan", BooleanValue(false)); // Set true to use cell scanning method, false to use the default power method.
-	Config::SetDefault ("ns3::MmWave3gppChannel::Blockage", BooleanValue(false)); // use blockage or not
+	Config::SetDefault ("ns3::MmWave3gppChannel::Blockage", BooleanValue(true)); // use blockage or not
 	Config::SetDefault ("ns3::MmWave3gppChannel::PortraitMode", BooleanValue(true)); // use blockage model with UT in portrait mode
 	Config::SetDefault ("ns3::MmWave3gppChannel::NumNonselfBlocking", IntegerValue(4)); // number of non-self blocking obstacles
 	Config::SetDefault ("ns3::MmWave3gppChannel::BlockerSpeed", DoubleValue(1)); // speed of non-self blocking obstacles
 
 	Config::SetDefault ("ns3::MmWavePhyMacCommon::NumHarqProcess", UintegerValue(100));
+
 
 	double hBS = 0; //base station antenna height in meters;
 	double hUT = 0; //user antenna height in meters;
@@ -220,6 +272,9 @@ main (int argc, char *argv[])
 	mmwaveHelper->SetAttribute ("PathlossModel", StringValue ("ns3::MmWave3gppBuildingsPropagationLossModel"));
 	mmwaveHelper->SetAttribute ("ChannelModel", StringValue ("ns3::MmWave3gppChannel"));
 
+  mmwaveHelper->SetEnbPhyArchitecture(Analog);
+  mmwaveHelper->SetUePhyArchitecture(Analog);
+
 	mmwaveHelper->Initialize();
 	mmwaveHelper->SetHarqEnabled(true);
 
@@ -244,20 +299,7 @@ main (int argc, char *argv[])
 		PointToPointHelper p2ph;
 		p2ph.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
 		p2ph.SetDeviceAttribute ("Mtu", UintegerValue (1500));
-		if (i==0)
-		{
-			p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.009)));
-		}
-		else if(i==1)
-		{
-			p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.004)));
-		}
-		else
-		{
-			p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.0015)));
-
-		}
-		//p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.010+i*0.0025)));
+		p2ph.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (p2pDelay)));
 
 		NetDeviceContainer internetDevices = p2ph.Install (pgw, remoteHost);
 
@@ -272,53 +314,98 @@ main (int argc, char *argv[])
 
 	}
 
+	/*Ptr < Building > building1;
+	building1 = Create<Building> ();
+	building1->SetBoundaries (Box (1100,1140.0,
+								12, 20.0,
+								0.0, 40));
 
-	Ptr < Building > building4d;
-	building4d = Create<Building> ();
-	building4d->SetBoundaries (Box (30,60.0,
-								-40.0, 40,
-								0.0, 50));
+
+	Ptr < Building > building2;
+	building2 = Create<Building> ();
+	building2->SetBoundaries (Box (620,700.0,
+								0, 5.0,
+								0.0, 40));
+
+	Ptr < Building > building3;
+	building3 = Create<Building> ();
+	building3->SetBoundaries (Box (565,575.0,
+								1.0, 5.0,
+								0.0, 40));
+
+	Ptr < Building > building4;
+	building4 = Create<Building> ();
+	building4->SetBoundaries (Box (1220,1260.0,
+								11.0, 11.5,
+								0.0, 40));
+
+	Ptr < Building > building5;
+	building5 = Create<Building> ();
+	building5->SetBoundaries (Box (1330,1360.0,
+								11.0, 11.5,
+								0.0, 40));*/
 
 
-	NodeContainer ueNodes;
-	NodeContainer enbNodes;
-	enbNodes.Create(1);
-	ueNodes.Create(nodeNum);
+
+	Ptr < Building > building1;
+	building1 = Create<Building> ();
+	building1->SetBoundaries (Box (-100,100.0,
+								10, 20.0,
+								0.0, 40));
+
+
+
+	  NodeContainer ueNodes;
+	  NodeContainer mmWaveEnbNodes;
+	  mmWaveEnbNodes.Create(1);
+	  ueNodes.Create(1);
+
+
 
 	Ptr<ListPositionAllocator> enbPositionAlloc = CreateObject<ListPositionAllocator> ();
 	enbPositionAlloc->Add (Vector (0.0, 0.0, hBS));
+
 	MobilityHelper enbmobility;
 	enbmobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 	enbmobility.SetPositionAllocator(enbPositionAlloc);
-	enbmobility.Install (enbNodes);
-	BuildingsHelper::Install (enbNodes);
+	enbmobility.Install (mmWaveEnbNodes);
+	BuildingsHelper::Install (mmWaveEnbNodes);
+
 	MobilityHelper uemobility;
-	uemobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
-	                             "Bounds", RectangleValue (Rectangle (-100, 100, -100, 100)));
-	Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
-	uePositionAlloc->Add (Vector (41.0, 10.0, hUT));
-	uePositionAlloc->Add (Vector (80.0, 20.0, hUT));
-	uePositionAlloc->Add (Vector (-100.0, 53.0, hUT));
-
-	uemobility.SetPositionAllocator(uePositionAlloc);
-
-	uemobility.Install (ueNodes);
-	BuildingsHelper::Install (ueNodes);
+  Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
+  uePositionAlloc->Add (Vector (-20.0, -20.0, hUT));
 
 
+//  uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  uemobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
+  uemobility.SetPositionAllocator(uePositionAlloc);
+  uemobility.Install (ueNodes);
+//  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (60, -20, hUT));
+  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
 
+  BuildingsHelper::Install (ueNodes);
 	// Install LTE Devices to the nodes
-	NetDeviceContainer enbDevs = mmwaveHelper->InstallEnbDevice (enbNodes);
-	NetDeviceContainer ueDevs = mmwaveHelper->InstallUeDevice (ueNodes);
+
+	  NetDeviceContainer mmWaveEnbDevs = mmwaveHelper->InstallEnbDevice (mmWaveEnbNodes);
+	  NetDeviceContainer mcUeDevs;
+
+	    mcUeDevs = mmwaveHelper->InstallUeDevice (ueNodes);
 
 	// Install the IP stack on the UEs
 	// Assign IP address to UEs, and install applications
 	internet.Install (ueNodes);
 	Ipv4InterfaceContainer ueIpIface;
-	ueIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (ueDevs));
+	ueIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (mcUeDevs));
 
-	mmwaveHelper->AttachToClosestEnb (ueDevs, enbDevs);
-	//mmwaveHelper->EnableTraces ();
+  // Attach list of NetDevices to each phy layer to enable scanning
+  mmwaveHelper->AddMmWaveNetDevicesToPhy();
+
+  // Initialize channels between eNBs and UEs
+  //mmwaveHelper->InitiateChannel(mcUeDevs, mmWaveEnbDevs);
+  mmwaveHelper->AttachToClosestEnb (mcUeDevs, mmWaveEnbDevs);  	//mmwaveHelper->EnableTraces ();
+
+  mmwaveHelper->EnableTraces();
+
 
 	ApplicationContainer sourceApps;
 	ApplicationContainer sinkApps;
@@ -345,14 +432,14 @@ main (int argc, char *argv[])
 		sourceApps.Add (ftp.Install (remoteHostContainer.Get (i)));
 
 	    std::ostringstream fileName;
-	    fileName<<"UE-"<<i+1<<"-TCP-DATA.txt";
+	    fileName<<protocol+"-"+std::to_string(bufferSize)+"-"+std::to_string(packetSize)+"-"+std::to_string(p2pDelay)<<"-"<<i+1<<"-TCP-DATA.txt";
 
 		AsciiTraceHelper asciiTraceHelper;
 
 		Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream (fileName.str ().c_str ());
 		sinkApps.Get(i)->TraceConnectWithoutContext("Rx",MakeBoundCallback (&Rx, stream));
 	    sourceApps.Get(i)->SetStartTime(Seconds (0.1+0.01*i));
-	    Simulator::Schedule (Seconds (0.1001+0.01*i), &Traces, i);
+	    Simulator::Schedule (Seconds (0.1001+0.01*i), &Traces, i, protocol+"-"+std::to_string(bufferSize)+"-"+std::to_string(packetSize)+"-"+std::to_string(p2pDelay));
 	    //sourceApps.Get(i)->SetStopTime (Seconds (10-1.5*i));
 	    sourceApps.Get(i)->SetStopTime (Seconds (simStopTime));
 
