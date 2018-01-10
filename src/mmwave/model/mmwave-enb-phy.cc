@@ -276,10 +276,6 @@ MmWaveEnbPhy::StartSubFrame (void)
 	NS_LOG_FUNCTION (this);
 
 	m_lastSfStart = Simulator::Now();
-	if(m_lastSfStart == NanoSeconds(177000000))
-	{
-		std::cout << "Strange bug" <<std::endl;
-	}
 
 	m_currSfAllocInfo = m_sfAllocInfo[m_sfNum];
 	//m_currSfNumSlots = m_currSfAllocInfo.m_dlSlotAllocInfo.size () + m_currSfAllocInfo.m_ulSlotAllocInfo.size ();
