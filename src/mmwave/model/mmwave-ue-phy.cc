@@ -121,32 +121,32 @@ MmWaveUePhy::DoInitialize (void)
 	for (unsigned i = 0; i < m_phyMacConfig->GetSubframesPerFrame(); i++)
 	{
 		m_sfAllocInfo.push_back(SfAllocInfo(SfnSf (0, i, 0)));
-//		SlotAllocInfo dlCtrlSlot;
-//		dlCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
-//		dlCtrlSlot.m_numCtrlSym = 1;
-//		dlCtrlSlot.m_tddMode = SlotAllocInfo::DL;
-//		dlCtrlSlot.m_dci.m_numSym = 1;
-//		dlCtrlSlot.m_dci.m_symStart = 0;
-//		SlotAllocInfo ulCtrlSlot;
-//		ulCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
-//		ulCtrlSlot.m_numCtrlSym = 1;
-//		ulCtrlSlot.m_tddMode = SlotAllocInfo::UL;
-//		ulCtrlSlot.m_slotIdx = 0xFF;
-//		ulCtrlSlot.m_dci.m_numSym = 1;
-//		ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
-//		m_sfAllocInfo[i].m_slotAllocInfo.push_back (dlCtrlSlot);
-//		m_sfAllocInfo[i].m_slotAllocInfo.push_back (ulCtrlSlot);
-		for (unsigned s=0; s < m_phyMacConfig->GetSlotsPerSubframe(); s++)
+		SlotAllocInfo dlCtrlSlot;
+		dlCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
+		dlCtrlSlot.m_numCtrlSym = 4;
+		dlCtrlSlot.m_tddMode = SlotAllocInfo::DL;
+		dlCtrlSlot.m_dci.m_numSym = 1;
+		dlCtrlSlot.m_dci.m_symStart = 0;
+		SlotAllocInfo dummySlot;
+		dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
+		dummySlot.m_tddMode = SlotAllocInfo::NA;
+		dummySlot.m_dci.m_numSym = 1;
+		dummySlot.m_dci.m_symStart = 0;
+		SlotAllocInfo ulCtrlSlot;
+		ulCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
+		ulCtrlSlot.m_numCtrlSym = 1;
+		ulCtrlSlot.m_tddMode = SlotAllocInfo::UL;
+		ulCtrlSlot.m_slotIdx = (uint8_t)m_phyMacConfig->GetSlotsPerSubframe()-1;
+		ulCtrlSlot.m_dci.m_numSym = 1;
+		ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
+		m_sfAllocInfo[i].m_slotAllocInfo.push_back (dlCtrlSlot);
+		for (unsigned j = 1; j < m_phyMacConfig->GetSlotsPerSubframe()-1; j++)
 		{
-			SlotAllocInfo dlCtrlSlot (s, SlotAllocInfo::DL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
-			dlCtrlSlot.m_numCtrlSym = 4; //1
-			dlCtrlSlot.m_dci.m_numSym = 4; //1
-			dlCtrlSlot.m_dci.m_symStart = 4+s*m_phyMacConfig->GetSymbPerSlot(); //0
-			dlCtrlSlot.m_slotIdx = (uint8_t)s;
-			m_sfAllocInfo[i].m_slotAllocInfo.push_back (dlCtrlSlot);
-	//		dlCtrlSlot.m_dci.m_symStart = 8+s*m_phyMacConfig->GetSymbPerSlot();
-	//		m_sfAllocInfo[i].m_slotAllocInfo.push_back (dlCtrlSlot);
+			dummySlot.m_slotIdx = j;
+			dummySlot.m_dci.m_symStart = j*m_phyMacConfig->GetSymbPerSlot();
+			m_sfAllocInfo[i].m_slotAllocInfo.push_back (dummySlot);
 		}
+		m_sfAllocInfo[i].m_slotAllocInfo.push_back (ulCtrlSlot);
 	}
 
 	for (unsigned i = 0; i < m_phyMacConfig->GetTotalNumChunk(); i++)
@@ -468,36 +468,20 @@ MmWaveUePhy::SubframeIndication (uint16_t frameNum, uint8_t sfNum)
 	           (m_currSfAllocInfo.m_sfnSf.m_sfNum == m_sfNum));
 	m_sfAllocInfo[m_sfNum] = SfAllocInfo (SfnSf (m_frameNum+1, m_sfNum, 0));
 	SlotAllocInfo dlCtrlSlot;
-
-	// Carlos modification
-//	dlCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
-//	dlCtrlSlot.m_numCtrlSym = 1;
-//	dlCtrlSlot.m_tddMode = SlotAllocInfo::DL;
-//	dlCtrlSlot.m_dci.m_numSym = 1;
-//	dlCtrlSlot.m_dci.m_symStart = 0;
-//	SlotAllocInfo ulCtrlSlot;
-//	ulCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
-//	ulCtrlSlot.m_numCtrlSym = 1;
-//	ulCtrlSlot.m_tddMode = SlotAllocInfo::UL;
-//	ulCtrlSlot.m_slotIdx = 0xFF;
-//	ulCtrlSlot.m_dci.m_numSym = 1;
-//	ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
-//	m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_front (dlCtrlSlot);
-//	m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_back (ulCtrlSlot);
-
-	// Populate SS blocks
-	for (unsigned s=0; s < m_phyMacConfig->GetSlotsPerSubframe(); s++)
-	{
-		SlotAllocInfo dlCtrlSlot (s, SlotAllocInfo::DL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
-		dlCtrlSlot.m_numCtrlSym = 4; //1
-		dlCtrlSlot.m_dci.m_numSym = 4; //1
-		dlCtrlSlot.m_dci.m_symStart = 4+s*m_phyMacConfig->GetSymbPerSlot(); //0
-		dlCtrlSlot.m_slotIdx = (uint8_t)s;
-		m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_back (dlCtrlSlot);
-//		dlCtrlSlot.m_dci.m_symStart = 8+s*m_phyMacConfig->GetSymbPerSlot();
-//		m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_back (dlCtrlSlot);
-	}
-	// End of Carlos modification
+	dlCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
+	dlCtrlSlot.m_numCtrlSym = 1;
+	dlCtrlSlot.m_tddMode = SlotAllocInfo::DL;
+	dlCtrlSlot.m_dci.m_numSym = 1;
+	dlCtrlSlot.m_dci.m_symStart = 0;
+	SlotAllocInfo ulCtrlSlot;
+	ulCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
+	ulCtrlSlot.m_numCtrlSym = 1;
+	ulCtrlSlot.m_tddMode = SlotAllocInfo::UL;
+	ulCtrlSlot.m_slotIdx = 0xFF;
+	ulCtrlSlot.m_dci.m_numSym = 1;
+	ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
+	m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_front (dlCtrlSlot);
+	m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_back (ulCtrlSlot);
 
 	StartSlot ();
 }
@@ -539,98 +523,80 @@ MmWaveUePhy::StartSlot ()
 	Time slotPeriod = NanoSeconds(1000.0 * m_phyMacConfig->GetSlotPeriod());
 	m_receptionEnabled = false;
 
-	// Carlos modification
-	if (GetCurrentState() == SYNCHRONIZED)
+	if (m_slotNum == 0)  // reserved DL control
 	{
-//		if (m_slotNum == 0)  // reserved DL control
-//		if (m_phyMacConfig->GetSsBlockSlotStatus())	//Check if the current slot contains a SS block to transmit
-//		{
-//	//	slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * m_phyMacConfig->GetDlCtrlSymbols ());
-//			slotPeriod = NanoSeconds(1000.0 * m_phyMacConfig->GetSlotPeriod());
-//			NS_LOG_DEBUG ("UE" << m_rnti << " RXing DL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
-//					              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
-//							              "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
-//		}
-//		else
-//		if (m_slotNum == m_currSfAllocInfo.m_slotAllocInfo.size()-1) // reserved UL control
-		if(m_csiReportCounter == 0)	//The downcounter to transmit a csi report has reached zero
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * m_phyMacConfig->GetDlCtrlSymbols ());
+		NS_LOG_DEBUG ("UE" << m_rnti << " RXing DL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
+		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
+				              "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
+	}
+	else if (m_slotNum == m_currSfAllocInfo.m_slotAllocInfo.size()-1) // reserved UL control
+	{
+		SetSubChannelsForTransmission (m_channelChunks);
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * m_phyMacConfig->GetUlCtrlSymbols ());
+		std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
+		NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
+		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
+			              "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod-NanoSeconds(1.0)));
+		SendCtrlChannels (ctrlMsg, slotPeriod-NanoSeconds(1.0));
+	}
+	else if (currSlot.m_dci.m_format == DciInfoElementTdma::DL)  // scheduled DL data slot
+	{
+		m_receptionEnabled = true;
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
+		m_downlinkSpectrumPhy->AddExpectedTb (currSlot.m_dci.m_rnti, currSlot.m_dci.m_ndi, currSlot.m_dci.m_tbSize, currSlot.m_dci.m_mcs,
+		                                      m_channelChunks, currSlot.m_dci.m_harqProcess, currSlot.m_dci.m_rv, true,
+		                                      currSlot.m_dci.m_symStart, currSlot.m_dci.m_numSym);
+		m_reportDlTbSize (GetDevice ()->GetObject <MmWaveUeNetDevice> ()->GetImsi(), currSlot.m_dci.m_tbSize);
+		NS_LOG_DEBUG ("UE" << m_rnti << " RXing DL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
+		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
+		              "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
+	}
+	else if (currSlot.m_dci.m_format == DciInfoElementTdma::UL) // scheduled UL data slot
+	{
+		SetSubChannelsForTransmission (m_channelChunks);
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
+		std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
+		Ptr<PacketBurst> pktBurst = GetPacketBurst (SfnSf(m_frameNum, m_sfNum, currSlot.m_dci.m_symStart));
+		if (pktBurst && pktBurst->GetNPackets () > 0)
 		{
-			SetSubChannelsForTransmission (m_channelChunks);
-	////		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * m_phyMacConfig->GetUlCtrlSymbols ());
-	//		slotPeriod = NanoSeconds(1000.0 * m_phyMacConfig->GetSlotPeriod());
-			std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
-			NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
-						  << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
-							  "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod-NanoSeconds(1.0)));
-	//		SendCtrlChannels (ctrlMsg, slotPeriod-NanoSeconds(1.0));
-			Time timeOffset = slotPeriod - MicroSeconds(1*m_phyMacConfig->GetSymbolPeriod());
-			Simulator::Schedule (timeOffset, &MmWaveUePhy::SendCtrlChannels, this, ctrlMsg, MicroSeconds(1*m_phyMacConfig->GetSymbolPeriod()));
-			m_csiReportCounter = m_phyMacConfig->GetCsiReportPeriodicity();	//reset the counter
+			std::list< Ptr<Packet> > pkts = pktBurst->GetPackets ();
+			MmWaveMacPduTag tag;
+			pkts.front ()->PeekPacketTag (tag);
+			NS_ASSERT ((tag.GetSfn().m_sfNum == m_sfNum) && (tag.GetSfn().m_slotNum == currSlot.m_dci.m_symStart));
 
-			Ptr<MmWaveEnbNetDevice> enb =
-					DynamicCast<MmWaveEnbNetDevice>(m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice);
-					enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
-
-		}
-		m_csiReportCounter--;
-	//	else
-		if (currSlot.m_dci.m_format == DciInfoElementTdma::DL)  // scheduled DL data slot
-		{
-			m_receptionEnabled = true;
-	//		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
-	////		slotPeriod = NanoSeconds(1000.0 * m_phyMacConfig->GetSlotPeriod());
-			m_downlinkSpectrumPhy->AddExpectedTb (currSlot.m_dci.m_rnti, currSlot.m_dci.m_ndi, currSlot.m_dci.m_tbSize, currSlot.m_dci.m_mcs,
-												  m_channelChunks, currSlot.m_dci.m_harqProcess, currSlot.m_dci.m_rv, true,
-												  currSlot.m_dci.m_symStart, currSlot.m_dci.m_numSym);
-			m_reportDlTbSize (GetDevice ()->GetObject <MmWaveUeNetDevice> ()->GetImsi(), currSlot.m_dci.m_tbSize);
-			NS_LOG_DEBUG ("UE" << m_rnti << " RXing DL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
-						  << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
-						  "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
-		}
-		else if (currSlot.m_dci.m_format == DciInfoElementTdma::UL) // scheduled UL data slot
-		{
-			SetSubChannelsForTransmission (m_channelChunks);
-	////		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
-	//		slotPeriod = NanoSeconds(1000 * m_phyMacConfig->GetSlotPeriod());
-			std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
-			Ptr<PacketBurst> pktBurst = GetPacketBurst (SfnSf(m_frameNum, m_sfNum, currSlot.m_dci.m_symStart));
-			if (pktBurst && pktBurst->GetNPackets () > 0)
+			LteRadioBearerTag bearerTag;
+			if(!pkts.front ()->PeekPacketTag (bearerTag))
 			{
-				std::list< Ptr<Packet> > pkts = pktBurst->GetPackets ();
-				MmWaveMacPduTag tag;
-				pkts.front ()->PeekPacketTag (tag);
-				NS_ASSERT ((tag.GetSfn().m_sfNum == m_sfNum) && (tag.GetSfn().m_slotNum == currSlot.m_dci.m_symStart));
-
-				LteRadioBearerTag bearerTag;
-				if(!pkts.front ()->PeekPacketTag (bearerTag))
-				{
-					NS_FATAL_ERROR ("No radio bearer tag");
-				}
+				NS_FATAL_ERROR ("No radio bearer tag");
 			}
-			else
-			{
-				// sometimes the UE will be scheduled when no data is queued
-				// in this case, send an empty PDU
-				MmWaveMacPduTag tag (SfnSf(m_frameNum, m_sfNum, currSlot.m_dci.m_symStart));
-				Ptr<Packet> emptyPdu = Create <Packet> ();
-				MmWaveMacPduHeader header;
-				MacSubheader subheader (3, 0);  // lcid = 3, size = 0
-				header.AddSubheader (subheader);
-				emptyPdu->AddHeader (header);
-				emptyPdu->AddPacketTag (tag);
-				LteRadioBearerTag bearerTag (m_rnti, 3, 0);
-				emptyPdu->AddPacketTag (bearerTag);
-				pktBurst = CreateObject<PacketBurst> ();
-				pktBurst->AddPacket (emptyPdu);
-			}
-			m_reportUlTbSize (GetDevice ()->GetObject <MmWaveUeNetDevice> ()->GetImsi(), currSlot.m_dci.m_tbSize);
-			NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
-						  << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
-						  << "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
-	//		Simulator::Schedule (NanoSeconds(1.0), &MmWaveUePhy::SendDataChannels, this, pktBurst, ctrlMsg, slotPeriod-NanoSeconds(2.0), m_slotNum);
-	//		Time ssBurstTime = MicroSeconds(4*m_phyMacConfig->GetSymbolPeriod());
-	//		Simulator::Schedule (ssBurstTime, &MmWaveUePhy::SendDataChannels, this, pktBurst, ctrlMsg, slotPeriod-ssBurstTime-NanoSeconds (2.0), m_slotNum);
 		}
+		else
+		{
+			// sometimes the UE will be scheduled when no data is queued
+			// in this case, send an empty PDU
+			MmWaveMacPduTag tag (SfnSf(m_frameNum, m_sfNum, currSlot.m_dci.m_symStart));
+			Ptr<Packet> emptyPdu = Create <Packet> ();
+			MmWaveMacPduHeader header;
+			MacSubheader subheader (3, 0);  // lcid = 3, size = 0
+			header.AddSubheader (subheader);
+			emptyPdu->AddHeader (header);
+			emptyPdu->AddPacketTag (tag);
+			LteRadioBearerTag bearerTag (m_rnti, 3, 0);
+			emptyPdu->AddPacketTag (bearerTag);
+			pktBurst = CreateObject<PacketBurst> ();
+			pktBurst->AddPacket (emptyPdu);
+		}
+		m_reportUlTbSize (GetDevice ()->GetObject <MmWaveUeNetDevice> ()->GetImsi(), currSlot.m_dci.m_tbSize);
+		NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
+		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
+		              << "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
+		Simulator::Schedule (NanoSeconds(1.0), &MmWaveUePhy::SendDataChannels, this, pktBurst, ctrlMsg, slotPeriod-NanoSeconds(2.0), m_slotNum);
+	}
+	else if (currSlot.m_tddMode == SlotAllocInfo::NA)
+	{
+//		std::cout << "ue NA" << std::endl;
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * currSlot.m_dci.m_numSym);
 	}
 
 	m_prevSlotDir = currSlot.m_tddMode;
@@ -823,6 +789,7 @@ MmWaveUePhy::StartSlot ()
 	// End of Carlos modification
 
 	//NS_LOG_DEBUG ("MmWaveUePhy: Scheduling slot end for " << slotPeriod);
+//	slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
 	Simulator::Schedule (slotPeriod, &MmWaveUePhy::EndSlot, this);
 }
 
@@ -872,8 +839,10 @@ MmWaveUePhy::EndSlot ()
 		m_slotNum++;
 //		nextSlotStart = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () *
 //						                             m_currSfAllocInfo.m_slotAllocInfo[m_slotNum].m_dci.m_symStart);
-		nextSlotStart = NanoSeconds(1000.0 * m_phyMacConfig->GetSlotPeriod() * (uint16_t)m_slotNum);
-		Simulator::Schedule (nextSlotStart+m_lastSfStart-Simulator::Now(), &MmWaveUePhy::StartSlot, this);
+//		nextSlotStart = NanoSeconds(1000.0 * m_phyMacConfig->GetSlotPeriod() * (uint16_t)m_slotNum);
+//		Simulator::Schedule (nextSlotStart+m_lastSfStart-Simulator::Now(), &MmWaveUePhy::StartSlot, this);
+		nextSlotStart = NanoSeconds(1000*m_phyMacConfig->GetSlotPeriod()*(uint16_t)m_slotNum)+m_lastSfStart-Simulator::Now();
+		Simulator::Schedule (nextSlotStart, &MmWaveUePhy::StartSlot, this);
 	}
 
 	if (m_receptionEnabled)

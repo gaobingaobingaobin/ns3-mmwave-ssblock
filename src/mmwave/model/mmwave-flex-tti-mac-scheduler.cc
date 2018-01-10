@@ -671,37 +671,13 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 	NS_LOG_DEBUG ("Scheduling DL frame "<< (unsigned)frameNum << " subframe " << (unsigned)sfNum
 	              << " UL frame " << (unsigned)ulSfn.m_frameNum << " subframe " << (unsigned)ulSfn.m_sfNum);
 
-
-
-
-	// add slots/symbols for DL control
-	//Carlos Modification
-//	SlotAllocInfo dlCtrlSlot (0, SlotAllocInfo::DL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
-//	dlCtrlSlot.m_dci.m_numSym = 1;
-//	dlCtrlSlot.m_dci.m_symStart = 0;
-//	ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dlCtrlSlot);
-//	int resvCtrl = m_phyMacConfig->GetDlCtrlSymbols() + m_phyMacConfig->GetUlCtrlSymbols();
-	int resvCtrl = 0;
-	for (unsigned s=0; s < m_phyMacConfig->GetSlotsPerSubframe(); s++)
-	{
-		//for (unsigned i = 0; i < m_phyMacConfig->GetSubframesPerFrame(); i++)
-		uint16_t slotId = m_phyMacConfig->GetCurrentSsSlotId() + s;
-		if (m_phyMacConfig->CheckSsBlockSlotStatus(slotId))
-		{
-			SlotAllocInfo dlCtrlSlot (s, SlotAllocInfo::DL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
-			dlCtrlSlot.m_numCtrlSym = 4; //1
-			dlCtrlSlot.m_dci.m_numSym = 4; //1
-			dlCtrlSlot.m_dci.m_symStart = 4+s*m_phyMacConfig->GetSymbPerSlot(); //0
-			dlCtrlSlot.m_slotIdx = (uint8_t)s;
-			ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dlCtrlSlot);
-			resvCtrl += dlCtrlSlot.m_numCtrlSym;
-//			dlCtrlSlot.m_dci.m_symStart = 8+s*m_phyMacConfig->GetSymbPerSlot();
-//			ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dlCtrlSlot);
-//			resvCtrl += dlCtrlSlot.m_numCtrlSym;
-		}
-	}
-
-	int symAvail = m_phyMacConfig->GetSymbolsPerSubframe () - resvCtrl;
+	// add slot for DL control
+	SlotAllocInfo dlCtrlSlot (0, SlotAllocInfo::DL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
+	dlCtrlSlot.m_dci.m_numSym = 1;
+	dlCtrlSlot.m_dci.m_symStart = 0;
+	ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dlCtrlSlot);
+	int resvCtrl = m_phyMacConfig->GetDlCtrlSymbols() + m_phyMacConfig->GetUlCtrlSymbols();
+	int symAvail = m_phyMacConfig->GetSymbolsPerSlot () - resvCtrl;
 	uint8_t slotIdx = 1;
 	uint8_t symIdx = m_phyMacConfig->GetDlCtrlSymbols(); // symbols reserved for control at beginning of subframe
 
@@ -1160,12 +1136,25 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 	// Carlos modification: Uncomment uplink control sched
 	if (ueInfo.size () == 0)
 	{
+		// FIXME: We add dummy slots (empty) to get the number of slots per subframe the 3GPP demands according the SCS
+		SlotAllocInfo dummySlot;
+		dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
+		dummySlot.m_tddMode = SlotAllocInfo::NA;
+		dummySlot.m_dci.m_numSym = 1;
+		dummySlot.m_dci.m_symStart = 0;
+		for (uint8_t i = slotIdx; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
+		{
+			dummySlot.m_slotIdx = i;
+			dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
+			ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dummySlot);
+		}
+
 		// add slot for UL control
-//		SlotAllocInfo ulCtrlSlot (0xFF, SlotAllocInfo::UL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
-//		ulCtrlSlot.m_dci.m_numSym = 1;
-//		ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
-//		ret.m_sfAllocInfo.m_slotAllocInfo.push_back (ulCtrlSlot);
-//		m_macSchedSapUser->SchedConfigInd (ret);
+		SlotAllocInfo ulCtrlSlot (0xFF, SlotAllocInfo::UL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
+		ulCtrlSlot.m_dci.m_numSym = 1;
+		ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
+		ret.m_sfAllocInfo.m_slotAllocInfo.push_back (ulCtrlSlot);
+		m_macSchedSapUser->SchedConfigInd (ret);
 		return;
 	}
 	// End of Carlos modification
@@ -1555,6 +1544,20 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 		}
 	}
 	while (itUeInfo != itUeInfoStart); // break when looped back to initial RNTI
+
+
+	// FIXME: We add dummy slots (empty) to get the number of slots per subframe the 3GPP demands according the SCS
+	SlotAllocInfo dummySlot;
+	dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
+	dummySlot.m_tddMode = SlotAllocInfo::NA;
+	dummySlot.m_dci.m_numSym = 1;
+	dummySlot.m_dci.m_symStart = 0;
+	for (uint8_t i = slotIdx; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
+	{
+		dummySlot.m_slotIdx = i;
+		dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
+		ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dummySlot);
+	}
 
 	// add slot for UL control
 	SlotAllocInfo ulCtrlSlot (0xFF, SlotAllocInfo::UL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);

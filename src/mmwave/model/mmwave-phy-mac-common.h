@@ -503,6 +503,12 @@ public:
 		return m_symbolsPerSubframe;
 	}
 
+	inline uint32_t
+	GetSymbolsPerSlot (void)
+	{
+		return m_symbolsPerSlot;
+	}
+
 	inline double
 	GetSubframePeriod (void)
 	{

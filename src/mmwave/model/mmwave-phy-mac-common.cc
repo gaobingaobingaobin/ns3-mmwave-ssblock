@@ -185,7 +185,7 @@ MmWavePhyMacCommon::MmWavePhyMacCommon ()
 	m_wbCqiPeriodUs (500),
 	m_tbDecodeLatencyUs (100.0),
 	m_maxTbSizeBytes (0x7FFF),
-	m_scs (SCS60KHz),		//Carlos modification
+	m_scs (SCS120KHz),		//Carlos modification
 	m_slotPeriod (125),
 	m_csiPeriodicReportPeriodicity(5),
 	m_ssBurstPattern (),
