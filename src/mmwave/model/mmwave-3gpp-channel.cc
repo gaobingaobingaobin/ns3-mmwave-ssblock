@@ -608,14 +608,14 @@ MmWave3gppChannel::DoCalcRxPowerSpectralDensity (Ptr<const SpectrumValue> txPsd,
 				NS_LOG_INFO("channelParams->m_txW.size() == 0 " << (channelParams->m_txW.size() == 0));
 				NS_LOG_INFO("channelParams->m_rxW.size() == 0 " << (channelParams->m_rxW.size() == 0));
 				m_channelMap[key] = channelParams;
-				m_channelScanningMatrixMap[key] = channelParams;
+				m_channelScanningMatrixMap[key] = Copy(channelParams);
 				return rxPsd;
 			}
 		}
 
 		CalLongTerm (channelParams);
 		m_channelMap[key] = channelParams;
-		m_channelScanningMatrixMap[key] = channelParams;
+		m_channelScanningMatrixMap[key] = Copy(channelParams);
 
 	}
 	else if (itReverse == m_channelMap.end ()) //Find channel matrix in the forward link

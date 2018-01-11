@@ -69,19 +69,19 @@ Traces(uint16_t nodeNum, std::string protocol)
 	AsciiTraceHelper asciiTraceHelper;
 
 	std::ostringstream pathCW;
-	pathCW<<"/NodeList/"<<nodeNum+2<<"/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow";
+	pathCW<<"/NodeList/"<<nodeNum+1<<"/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow";
 
 	std::ostringstream fileCW;
 	fileCW<<protocol<<"-"<<nodeNum+1<<"-TCP-CWND.txt";
 
 	std::ostringstream pathRTT;
-	pathRTT<<"/NodeList/"<<nodeNum+2<<"/$ns3::TcpL4Protocol/SocketList/0/RTT";
+	pathRTT<<"/NodeList/"<<nodeNum+1<<"/$ns3::TcpL4Protocol/SocketList/0/RTT";
 
 	std::ostringstream fileRTT;
 	fileRTT<<protocol<<"-"<<nodeNum+1<<"-TCP-RTT.txt";
 
 	std::ostringstream pathRCWnd;
-	pathRCWnd<<"/NodeList/"<<nodeNum+2<<"/$ns3::TcpL4Protocol/SocketList/0/RWND";
+	pathRCWnd<<"/NodeList/"<<nodeNum+1<<"/$ns3::TcpL4Protocol/SocketList/0/RWND";
 
 	std::ostringstream fileRCWnd;
 	fileRCWnd<<protocol<<"-"<<nodeNum+1<<"-TCP-RCWND.txt";
@@ -114,7 +114,7 @@ main (int argc, char *argv[])
 	bool rlcAmEnabled = true;
 	std::string protocol = "TcpCubic";
 	//int bufferSize = 1000 *1000 * 3.5 * 0.4;
-	int bufferSize = 85*1000*1.1;
+	int bufferSize = 8000000;
 	int packetSize = 14000;
 	int p2pDelay = 9;
 	// This 3GPP channel model example only demonstrate the pathloss model. The fast fading model is still in developing.
