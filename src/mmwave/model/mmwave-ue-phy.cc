@@ -469,10 +469,16 @@ MmWaveUePhy::SubframeIndication (uint16_t frameNum, uint8_t sfNum)
 	m_sfAllocInfo[m_sfNum] = SfAllocInfo (SfnSf (m_frameNum+1, m_sfNum, 0));
 	SlotAllocInfo dlCtrlSlot;
 	dlCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
-	dlCtrlSlot.m_numCtrlSym = 1;
+	dlCtrlSlot.m_numCtrlSym = 4;
 	dlCtrlSlot.m_tddMode = SlotAllocInfo::DL;
+	dlCtrlSlot.m_slotIdx = 0x00;
 	dlCtrlSlot.m_dci.m_numSym = 1;
 	dlCtrlSlot.m_dci.m_symStart = 0;
+//	SlotAllocInfo dummySlot;
+//	dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
+//	dummySlot.m_tddMode = SlotAllocInfo::NA;
+//	dummySlot.m_dci.m_numSym = 1;
+//	dummySlot.m_dci.m_symStart = 0;
 	SlotAllocInfo ulCtrlSlot;
 	ulCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
 	ulCtrlSlot.m_numCtrlSym = 1;
@@ -481,6 +487,12 @@ MmWaveUePhy::SubframeIndication (uint16_t frameNum, uint8_t sfNum)
 	ulCtrlSlot.m_dci.m_numSym = 1;
 	ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
 	m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_front (dlCtrlSlot);
+//	for (unsigned i = 1; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
+//	{
+//		dummySlot.m_slotIdx = i;
+//		dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
+//		m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_back (dummySlot);
+//	}
 	m_sfAllocInfo[m_sfNum].m_slotAllocInfo.push_back (ulCtrlSlot);
 
 	StartSlot ();
@@ -533,7 +545,12 @@ MmWaveUePhy::StartSlot ()
 	else if (m_slotNum == m_currSfAllocInfo.m_slotAllocInfo.size()-1) // reserved UL control
 	{
 		SetSubChannelsForTransmission (m_channelChunks);
-		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * m_phyMacConfig->GetUlCtrlSymbols ());
+		uint16_t numSym = currSlot.m_dci.m_numSym;
+		if(numSym > m_phyMacConfig->GetSymbPerSlot())
+		{
+			numSym = m_phyMacConfig->GetSymbPerSlot();
+		}
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * numSym);//currSlot.m_dci.m_numSym);
 		std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
 		NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
@@ -543,7 +560,14 @@ MmWaveUePhy::StartSlot ()
 	else if (currSlot.m_dci.m_format == DciInfoElementTdma::DL)  // scheduled DL data slot
 	{
 		m_receptionEnabled = true;
-		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
+
+		uint16_t numSym = currSlot.m_dci.m_numSym;
+		if(numSym > m_phyMacConfig->GetSymbPerSlot())
+		{
+			numSym = m_phyMacConfig->GetSymbPerSlot();
+		}
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * numSym);//currSlot.m_dci.m_numSym);
+
 		m_downlinkSpectrumPhy->AddExpectedTb (currSlot.m_dci.m_rnti, currSlot.m_dci.m_ndi, currSlot.m_dci.m_tbSize, currSlot.m_dci.m_mcs,
 		                                      m_channelChunks, currSlot.m_dci.m_harqProcess, currSlot.m_dci.m_rv, true,
 		                                      currSlot.m_dci.m_symStart, currSlot.m_dci.m_numSym);
@@ -552,17 +576,24 @@ MmWaveUePhy::StartSlot ()
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
 		              "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
 
-		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
-		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
-		{
-			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
-		}
-		// End of Carlos modification
+//		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
+//		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
+//		{
+//			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
+//		}
+//		// End of Carlos modification
 	}
 	else if (currSlot.m_dci.m_format == DciInfoElementTdma::UL) // scheduled UL data slot
 	{
 		SetSubChannelsForTransmission (m_channelChunks);
-		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
+
+		uint16_t numSym = currSlot.m_dci.m_numSym;
+		if(numSym > m_phyMacConfig->GetSymbPerSlot())
+		{
+			numSym = m_phyMacConfig->GetSymbPerSlot();
+		}
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * numSym);//currSlot.m_dci.m_numSym);
+
 		std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
 		Ptr<PacketBurst> pktBurst = GetPacketBurst (SfnSf(m_frameNum, m_sfNum, currSlot.m_dci.m_symStart));
 		if (pktBurst && pktBurst->GetNPackets () > 0)
@@ -599,12 +630,12 @@ MmWaveUePhy::StartSlot ()
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
 		              << "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
 
-		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
-		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
-		{
-			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
-		}
-		// End of Carlos modification
+//		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
+//		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
+//		{
+//			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
+//		}
+//		// End of Carlos modification
 
 		Simulator::Schedule (NanoSeconds(1.0), &MmWaveUePhy::SendDataChannels, this, pktBurst, ctrlMsg, slotPeriod-NanoSeconds(2.0), m_slotNum);
 	}
