@@ -456,6 +456,14 @@ MmWaveEnbPhy::StartSlot (void)
 		NS_LOG_DEBUG ("ENB TXing DL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
 		              << "\t start " << Simulator::Now()+NanoSeconds(1.0) << " end " << Simulator::Now() + slotPeriod-NanoSeconds (2.0));
+
+		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
+		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
+		{
+			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
+		}
+		// End of Carlos modification
+
 		Simulator::Schedule (NanoSeconds(1.0), &MmWaveEnbPhy::SendDataChannels, this, pktBurst, slotPeriod-NanoSeconds (2.0), currSlot);
 	}
 	else if (currSlot.m_tddMode == SlotAllocInfo::UL)  // receive UL slot
@@ -483,7 +491,15 @@ MmWaveEnbPhy::StartSlot (void)
 		NS_LOG_DEBUG ("ENB RXing UL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
 		              << "\t start " << Simulator::Now() << " end " << Simulator::Now() + slotPeriod );
+
+		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
+		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
+		{
+			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
+		}
+
 	}
+	// This final else-if checks for dummy (empty) slots, which is a workaround used to force the scheduler to transmit the number of slots determined by the SCS
 	else if (currSlot.m_tddMode == SlotAllocInfo::NA)
 	{
 //		std::cout << "enb NA" << std::endl;

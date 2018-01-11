@@ -551,6 +551,13 @@ MmWaveUePhy::StartSlot ()
 		NS_LOG_DEBUG ("UE" << m_rnti << " RXing DL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
 		              "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
+
+		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
+		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
+		{
+			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
+		}
+		// End of Carlos modification
 	}
 	else if (currSlot.m_dci.m_format == DciInfoElementTdma::UL) // scheduled UL data slot
 	{
@@ -591,6 +598,14 @@ MmWaveUePhy::StartSlot ()
 		NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
 		              << "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
+
+		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
+		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
+		{
+			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
+		}
+		// End of Carlos modification
+
 		Simulator::Schedule (NanoSeconds(1.0), &MmWaveUePhy::SendDataChannels, this, pktBurst, ctrlMsg, slotPeriod-NanoSeconds(2.0), m_slotNum);
 	}
 	else if (currSlot.m_tddMode == SlotAllocInfo::NA)
@@ -720,69 +735,6 @@ MmWaveUePhy::StartSlot ()
 
 
 	}
-//	else
-//	{
-//		NS_LOG_INFO("Not an SS slot (slot id = " << m_phyMacConfig->GetCurrentSsSlotId() << ")");
-////		std::cout << "[UE] Not an SS slot (slot id = " << m_phyMacConfig->GetCurrentSsSlotId() << ")" << std::endl;
-//
-//	}
-
-//	if (currSlot.m_dci.m_format == DciInfoElementTdma::DL)  // scheduled DL data slot
-//	{
-//		m_receptionEnabled = true;
-////		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
-////		slotPeriod = NanoSeconds(1000.0 * m_phyMacConfig->GetSlotPeriod());
-//		m_downlinkSpectrumPhy->AddExpectedTb (currSlot.m_dci.m_rnti, currSlot.m_dci.m_ndi, currSlot.m_dci.m_tbSize, currSlot.m_dci.m_mcs,
-//											  m_channelChunks, currSlot.m_dci.m_harqProcess, currSlot.m_dci.m_rv, true,
-//											  currSlot.m_dci.m_symStart, currSlot.m_dci.m_numSym);
-//		m_reportDlTbSize (GetDevice ()->GetObject <MmWaveUeNetDevice> ()->GetImsi(), currSlot.m_dci.m_tbSize);
-//		NS_LOG_DEBUG ("UE" << m_rnti << " RXing DL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
-//					  << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
-//					  "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
-//	}
-//	else if (currSlot.m_dci.m_format == DciInfoElementTdma::UL) // scheduled UL data slot
-//	{
-//		SetSubChannelsForTransmission (m_channelChunks);
-////		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * currSlot.m_dci.m_numSym);
-////		slotPeriod = NanoSeconds(1000 * m_phyMacConfig->GetSlotPeriod());
-//		std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
-//		Ptr<PacketBurst> pktBurst = GetPacketBurst (SfnSf(m_frameNum, m_sfNum, currSlot.m_dci.m_symStart));
-//		if (pktBurst && pktBurst->GetNPackets () > 0)
-//		{
-//			std::list< Ptr<Packet> > pkts = pktBurst->GetPackets ();
-//			MmWaveMacPduTag tag;
-//			pkts.front ()->PeekPacketTag (tag);
-//			NS_ASSERT ((tag.GetSfn().m_sfNum == m_sfNum) && (tag.GetSfn().m_slotNum == currSlot.m_dci.m_symStart));
-//
-//			LteRadioBearerTag bearerTag;
-//			if(!pkts.front ()->PeekPacketTag (bearerTag))
-//			{
-//				NS_FATAL_ERROR ("No radio bearer tag");
-//			}
-//		}
-//		else
-//		{
-//			// sometimes the UE will be scheduled when no data is queued
-//			// in this case, send an empty PDU
-//			MmWaveMacPduTag tag (SfnSf(m_frameNum, m_sfNum, currSlot.m_dci.m_symStart));
-//			Ptr<Packet> emptyPdu = Create <Packet> ();
-//			MmWaveMacPduHeader header;
-//			MacSubheader subheader (3, 0);  // lcid = 3, size = 0
-//			header.AddSubheader (subheader);
-//			emptyPdu->AddHeader (header);
-//			emptyPdu->AddPacketTag (tag);
-//			LteRadioBearerTag bearerTag (m_rnti, 3, 0);
-//			emptyPdu->AddPacketTag (bearerTag);
-//			pktBurst = CreateObject<PacketBurst> ();
-//			pktBurst->AddPacket (emptyPdu);
-//		}
-//		m_reportUlTbSize (GetDevice ()->GetObject <MmWaveUeNetDevice> ()->GetImsi(), currSlot.m_dci.m_tbSize);
-//		NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
-//					  << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
-//					  << "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
-//		Simulator::Schedule (NanoSeconds(1.0), &MmWaveUePhy::SendDataChannels, this, pktBurst, ctrlMsg, slotPeriod-NanoSeconds(2.0), m_slotNum);
-//	}
-
 
 	// Get the next slot ID for the SS Block slot condition determination
 	m_phyMacConfig->IncreaseCurrentSsSlotId();
