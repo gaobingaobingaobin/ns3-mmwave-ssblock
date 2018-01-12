@@ -92,6 +92,8 @@ public:
 
 	void UpdateBestScannedEnb();
 
+	void ScheduleSsSlotSetStart(MmWavePhyMacCommon::SsBurstPeriods period);
+
 private:
 
 	std::complex<double> ParseComplex (std::string strCmplx);

@@ -259,6 +259,14 @@ void MmWaveBeamManagement::UpdateBestScannedEnb()
 //	return bestScannedBeamPair;
 }
 
+
+void MmWaveBeamManagement::ScheduleSsSlotSetStart(MmWavePhyMacCommon::SsBurstPeriods period)
+{
+	m_ssBlocksLastBeamSweepUpdate = 0;
+	Simulator::Schedule(MicroSeconds(1000*period)-NanoSeconds(1),&MmWaveBeamManagement::ScheduleSsSlotSetStart,this,period);
+}
+
+
 std::complex<double>
 MmWaveBeamManagement::ParseComplex (std::string strCmplx)
 {

@@ -272,8 +272,13 @@ main (int argc, char *argv[])
 	mmwaveHelper->SetAttribute ("PathlossModel", StringValue ("ns3::MmWave3gppBuildingsPropagationLossModel"));
 	mmwaveHelper->SetAttribute ("ChannelModel", StringValue ("ns3::MmWave3gppChannel"));
 
+	// Set the transceiver architectures
   mmwaveHelper->SetEnbPhyArchitecture(Analog);
   mmwaveHelper->SetUePhyArchitecture(Analog);
+
+  // Set the SS burst set pattern. SsBurstPeriod must be smaller than SetSsBurstSetPeriod
+  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms20);
+  mmwaveHelper->SetSsBurstPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms10);
 
 	mmwaveHelper->Initialize();
 	mmwaveHelper->SetHarqEnabled(true);

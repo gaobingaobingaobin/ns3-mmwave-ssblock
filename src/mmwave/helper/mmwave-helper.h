@@ -121,6 +121,8 @@ public:
 
 	void SetEnbPhyArchitecture (Architecture arch);
 	void SetUePhyArchitecture (Architecture arch);
+	void SetSsBurstPeriod (MmWavePhyMacCommon::SsBurstPeriods period);
+	void SetSsBurstSetPeriod (MmWavePhyMacCommon::SsBurstPeriods period);
 	// End of modification
 
 protected:
@@ -169,6 +171,8 @@ private:
 	Ptr<MmWavePhyMacCommon> m_phyMacCommon;
 	Architecture m_uePhyArch;
 	Architecture m_enbPhyArch;
+	MmWavePhyMacCommon::SsBurstPeriods m_ssBurstPeriod;
+	MmWavePhyMacCommon::SsBurstPeriods m_ssBurstSetPeriod;
 
 	ObjectFactory m_ffrAlgorithmFactory;
 	ObjectFactory m_enbAntennaModelFactory;
