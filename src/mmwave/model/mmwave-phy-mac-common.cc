@@ -258,7 +258,8 @@ bool MmWavePhyMacCommon::CheckSsBlockSlotStatus (uint16_t slotId)
 	if(m_ssBurstPattern.empty())
 		return true;
 
-	for (std::vector<uint16_t>::iterator it = m_ssBurstPattern.begin(); it != m_ssBurstPattern.end(); it++)
+	for (std::vector<uint16_t>::iterator it = m_ssBurstPattern.begin();
+			it != m_ssBurstPattern.end() && *it <= slotId; it++)
 	{
 		if (*it == slotId)
 		{

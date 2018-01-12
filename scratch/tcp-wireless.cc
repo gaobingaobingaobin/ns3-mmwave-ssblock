@@ -272,8 +272,8 @@ main (int argc, char *argv[])
 	mmwaveHelper->SetAttribute ("PathlossModel", StringValue ("ns3::MmWave3gppBuildingsPropagationLossModel"));
 	mmwaveHelper->SetAttribute ("ChannelModel", StringValue ("ns3::MmWave3gppChannel"));
 
-  mmwaveHelper->SetEnbPhyArchitecture(Digital);
-  mmwaveHelper->SetUePhyArchitecture(Digital);
+  mmwaveHelper->SetEnbPhyArchitecture(Analog);
+  mmwaveHelper->SetUePhyArchitecture(Analog);
 
 	mmwaveHelper->Initialize();
 	mmwaveHelper->SetHarqEnabled(true);

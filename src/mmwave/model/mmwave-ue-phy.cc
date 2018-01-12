@@ -688,8 +688,7 @@ MmWaveUePhy::StartSlot ()
 						Time updateTime =Simulator::Now()+MicroSeconds(bestBeamInfo.m_txBeamId * m_phyMacConfig->GetSlotPeriod());
 //						Simulator::Schedule(MicroSeconds(bestBeamInfo.m_txBeamId * m_phyMacConfig->GetSlotPeriod())
 //								,&MmWaveUePhy::RegisterToEnb,this,cellId,m_phyMacConfig);
-//						Simulator::Schedule(MicroSeconds(bestBeamInfo.m_txBeamId * m_phyMacConfig->GetSlotPeriod())
-//														,&MmWaveUePhy::AttachToSelectedEnb,this,m_netDevice,bestBeamInfo.m_targetNetDevice);
+						Simulator::Schedule(updateTime,&MmWaveUePhy::AttachToSelectedEnb,this,m_netDevice,bestBeamInfo.m_targetNetDevice);
 
 //						AttachToSelectedEnb
 					}

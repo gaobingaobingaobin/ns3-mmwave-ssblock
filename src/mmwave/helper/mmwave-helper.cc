@@ -687,7 +687,12 @@ MmWaveHelper::AttachToClosestEnb (Ptr<NetDevice> ueDevice, NetDeviceContainer en
 	NS_ASSERT (closestEnbDevice != 0);
 
 	uint16_t cellId = closestEnbDevice->GetObject<MmWaveEnbNetDevice> ()->GetCellId ();
-	Ptr<MmWavePhyMacCommon> configParams = closestEnbDevice->GetObject<MmWaveEnbNetDevice> ()->GetPhy()->GetConfigurationParameters();
+	// UE should have its own configParams to support multiple nodes doing beam sweeping.
+	Ptr<MmWavePhyMacCommon> configParams = ueDevice->GetObject<MmWaveUeNetDevice> ()->GetPhy()->GetConfigurationParameters();
+	if(configParams == NULL)
+	{
+		configParams = Copy<MmWavePhyMacCommon>(closestEnbDevice->GetObject<MmWaveEnbNetDevice> ()->GetPhy()->GetConfigurationParameters());
+	}
 
 	closestEnbDevice->GetObject<MmWaveEnbNetDevice> ()->GetPhy ()->AddUePhy (ueDevice->GetObject<MmWaveUeNetDevice> ()->GetImsi (), ueDevice);
 	ueDevice->GetObject<MmWaveUeNetDevice> ()->GetPhy ()->RegisterToEnb (cellId, configParams);
