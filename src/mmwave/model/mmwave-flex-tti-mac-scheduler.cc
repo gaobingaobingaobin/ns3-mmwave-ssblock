@@ -673,7 +673,7 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 
 	// add slot for DL control
 	SlotAllocInfo dlCtrlSlot (0, SlotAllocInfo::DL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
-	dlCtrlSlot.m_dci.m_numSym = 1;
+	dlCtrlSlot.m_dci.m_numSym = 4;
 	dlCtrlSlot.m_dci.m_symStart = 0;
 	ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dlCtrlSlot);
 	int resvCtrl = m_phyMacConfig->GetDlCtrlSymbols() + m_phyMacConfig->GetUlCtrlSymbols();
@@ -1136,18 +1136,18 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 	// Carlos modification: Uncomment uplink control sched
 	if (ueInfo.size () == 0)
 	{
-		// FIXME: We add dummy slots (empty) to get the number of slots per subframe the 3GPP demands according the SCS
-		SlotAllocInfo dummySlot;
-		dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
-		dummySlot.m_tddMode = SlotAllocInfo::NA;
-		dummySlot.m_dci.m_numSym = 1;
-		dummySlot.m_dci.m_symStart = 0;
-		for (uint8_t i = slotIdx; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
-		{
-			dummySlot.m_slotIdx = i;
-			dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
-			ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dummySlot);
-		}
+//		// FIXME: We add dummy slots (empty) to get the number of slots per subframe the 3GPP demands according the SCS
+//		SlotAllocInfo dummySlot;
+//		dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
+//		dummySlot.m_tddMode = SlotAllocInfo::NA;
+//		dummySlot.m_dci.m_numSym = 1;
+//		dummySlot.m_dci.m_symStart = 0;
+//		for (uint8_t i = slotIdx; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
+//		{
+//			dummySlot.m_slotIdx = i;
+//			dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
+//			ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dummySlot);
+//		}
 
 		// add slot for UL control
 		SlotAllocInfo ulCtrlSlot (0xFF, SlotAllocInfo::UL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
@@ -1547,17 +1547,17 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 
 
 	// FIXME: We add dummy slots (empty) to get the number of slots per subframe the 3GPP demands according the SCS
-	SlotAllocInfo dummySlot;
-	dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
-	dummySlot.m_tddMode = SlotAllocInfo::NA;
-	dummySlot.m_dci.m_numSym = 1;
-	dummySlot.m_dci.m_symStart = 0;
-	for (uint8_t i = slotIdx; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
-	{
-		dummySlot.m_slotIdx = i;
-		dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
-		ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dummySlot);
-	}
+//	SlotAllocInfo dummySlot;
+//	dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
+//	dummySlot.m_tddMode = SlotAllocInfo::NA;
+//	dummySlot.m_dci.m_numSym = 1;
+//	dummySlot.m_dci.m_symStart = 0;
+//	for (uint8_t i = slotIdx; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
+//	{
+//		dummySlot.m_slotIdx = i;
+//		dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
+//		ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dummySlot);
+//	}
 
 	// add slot for UL control
 	SlotAllocInfo ulCtrlSlot (0xFF, SlotAllocInfo::UL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);

@@ -595,8 +595,11 @@ MmWave3gppChannel::DoCalcRxPowerSpectralDensity (Ptr<const SpectrumValue> txPsd,
 			{
 				LongTermCovMatrixBeamforming (channelParams);
 			}
+			if(Simulator::Now() == NanoSeconds(0))
+			{
 			txAntennaArray->SetBeamformingVector (channelParams->m_txW, rxDevice);
 			rxAntennaArray->SetBeamformingVector (channelParams->m_rxW, txDevice);
+			}
 		}
 		else
 		{

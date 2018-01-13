@@ -83,6 +83,8 @@ public:
 	void EndSlot (void);
 	void EndSubFrame (void);
 
+	void StartSsBlockSlot();
+
 	void SendDataChannels (Ptr<PacketBurst> pb, Time slotPrd, SlotAllocInfo& slotInfo);
 
 	void SendCtrlChannels (std::list<Ptr<MmWaveControlMessage> > ctrlMsg, Time slotPrd);

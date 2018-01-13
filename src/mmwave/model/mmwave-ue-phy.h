@@ -105,6 +105,7 @@ public:
 	void StartSlot ();
 	void EndSlot ();
 
+	void StartSsBlockSlot();
 
 	uint32_t GetSubframeNumber (void);
 

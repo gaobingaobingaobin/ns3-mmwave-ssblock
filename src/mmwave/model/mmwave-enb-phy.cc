@@ -156,25 +156,25 @@ MmWaveEnbPhy::DoInitialize (void)
 		dlCtrlSlot.m_tddMode = SlotAllocInfo::DL;
 		dlCtrlSlot.m_dci.m_numSym = 1;
 		dlCtrlSlot.m_dci.m_symStart = 0;
-		SlotAllocInfo dummySlot;
-		dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
-		dummySlot.m_tddMode = SlotAllocInfo::NA;
-		dummySlot.m_dci.m_numSym = 1;
-		dummySlot.m_dci.m_symStart = 0;
+//		SlotAllocInfo dummySlot;
+//		dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
+//		dummySlot.m_tddMode = SlotAllocInfo::NA;
+//		dummySlot.m_dci.m_numSym = 1;
+//		dummySlot.m_dci.m_symStart = 0;
 		SlotAllocInfo ulCtrlSlot;
 		ulCtrlSlot.m_slotType = SlotAllocInfo::CTRL;
 		ulCtrlSlot.m_numCtrlSym = 1;
 		ulCtrlSlot.m_tddMode = SlotAllocInfo::UL;
-		ulCtrlSlot.m_slotIdx = (uint8_t)m_phyMacConfig->GetSlotsPerSubframe()-1;
+		ulCtrlSlot.m_slotIdx = 0xFF;
 		ulCtrlSlot.m_dci.m_numSym = 1;
 		ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
 		m_sfAllocInfo[i].m_slotAllocInfo.push_back (dlCtrlSlot);
-		for (unsigned j = 1; j < m_phyMacConfig->GetSlotsPerSubframe()-1; j++)
-		{
-			dummySlot.m_slotIdx = j;
-			dummySlot.m_dci.m_symStart = j*m_phyMacConfig->GetSymbPerSlot();
-			m_sfAllocInfo[i].m_slotAllocInfo.push_back (dummySlot);
-		}
+//		for (unsigned j = 1; j < m_phyMacConfig->GetSlotsPerSubframe()-1; j++)
+//		{
+//			dummySlot.m_slotIdx = j;
+//			dummySlot.m_dci.m_symStart = j*m_phyMacConfig->GetSymbPerSlot();
+//			m_sfAllocInfo[i].m_slotAllocInfo.push_back (dummySlot);
+//		}
 		m_sfAllocInfo[i].m_slotAllocInfo.push_back (ulCtrlSlot);
 	}
 	double beamPeriodicity = m_phyMacConfig->GetSlotPeriod();
@@ -184,6 +184,7 @@ MmWaveEnbPhy::DoInitialize (void)
 	m_beamManagement->InitializeBeamSweepingTx(beamPeriodicityTime);
 	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
 	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
+	StartSsBlockSlot();
 	// End of Carlos modification
 
 	MmWavePhy::DoInitialize ();
@@ -355,8 +356,7 @@ MmWaveEnbPhy::StartSlot (void)
 
 //	Time guardPeriod;
 	// Carlos modification
-	Time slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
-
+	Time slotPeriod;// = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
 	Time CurrentTime = Simulator::Now();
 //	std::cout << "[" << CurrentTime << "] UE slot: " << m_slotNum << std::endl;
 
@@ -459,12 +459,7 @@ MmWaveEnbPhy::StartSlot (void)
 		NS_LOG_DEBUG ("ENB TXing DL DATA frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
 		              << "\t start " << Simulator::Now()+NanoSeconds(1.0) << " end " << Simulator::Now() + slotPeriod-NanoSeconds (2.0));
-		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
-		if(numSym > m_phyMacConfig->GetSymbPerSlot())
-		{
-			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
-		}
-		// End of Carlos modification
+
 		Simulator::Schedule (NanoSeconds(1.0), &MmWaveEnbPhy::SendDataChannels, this, pktBurst, slotPeriod-NanoSeconds (2.0), currSlot);
 
 	}
@@ -494,37 +489,17 @@ MmWaveEnbPhy::StartSlot (void)
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
 		              << "\t start " << Simulator::Now() << " end " << Simulator::Now() + slotPeriod );
 
-		//FIXME: It may happen that a transmission occupies more symbols than the slot has (14). In that case, we limit the transmission to one slot; otherwise the simulation stops
-		if(currSlot.m_dci.m_numSym > m_phyMacConfig->GetSymbPerSlot())
-		{
-			slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * (m_phyMacConfig->GetSymbPerSlot()-1));
-		}
+	}
 
-	}
-	// This final else-if checks for dummy (empty) slots, which is a workaround used to force the scheduler to transmit the number of slots determined by the SCS
-	else if (currSlot.m_tddMode == SlotAllocInfo::NA)
-	{
-//		std::cout << "enb NA" << std::endl;
-		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod() * currSlot.m_dci.m_numSym);
-	}
 
   m_prevSlotDir = currSlot.m_tddMode;
 
 	m_phySapUser->SubframeIndication (SfnSf (m_frameNum, m_sfNum, m_slotNum));  // trigger MAC
 
-	// Carlos modification
-	//Check if the current slot contains an SS block to transmit and the maximum number of transmissions in the SS Burst Set has not been exceeded
-	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)
-	{
-		m_beamManagement->BeamSweepStepTx();
-		m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
-	}
-	m_phyMacConfig->IncreaseCurrentSsSlotId();
-	// End of Carlos modification
-//	slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
 
 	Simulator::Schedule (slotPeriod, &MmWaveEnbPhy::EndSlot, this);
 }
+
 
 void
 MmWaveEnbPhy::EndSlot (void)
@@ -561,14 +536,32 @@ MmWaveEnbPhy::EndSlot (void)
 			}
 		}*/
 		m_slotNum++;
-//		nextSlotStart = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () *
-//						                             m_currSfAllocInfo.m_slotAllocInfo[m_slotNum].m_dci.m_symStart);
+		nextSlotStart = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () *
+						                             m_currSfAllocInfo.m_slotAllocInfo[m_slotNum].m_dci.m_symStart);
 //		nextSlotStart = NanoSeconds(1000 * m_phyMacConfig->GetSlotPeriod() * (uint16_t)m_slotNum);
-//		Simulator::Schedule (nextSlotStart+m_lastSfStart-Simulator::Now(), &MmWaveEnbPhy::StartSlot, this);
-		nextSlotStart = NanoSeconds((unsigned)m_slotNum*1000*m_phyMacConfig->GetSlotPeriod())+m_lastSfStart-Simulator::Now();
-		Simulator::Schedule (nextSlotStart, &MmWaveEnbPhy::StartSlot, this);
+		Simulator::Schedule (nextSlotStart+m_lastSfStart-Simulator::Now(), &MmWaveEnbPhy::StartSlot, this);
+//		nextSlotStart = NanoSeconds((unsigned)m_slotNum*1000*m_phyMacConfig->GetSlotPeriod())+m_lastSfStart-Simulator::Now();
+//		Simulator::Schedule (nextSlotStart, &MmWaveEnbPhy::StartSlot, this);
 	}
 }
+
+
+void
+MmWaveEnbPhy::StartSsBlockSlot()
+{
+//	std::cout << Simulator::Now ().GetMicroSeconds() << std::endl;
+	//Check if the current slot contains an SS block to transmit and the maximum number of transmissions in the SS Burst Set has not been exceeded
+	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)
+	{
+		m_beamManagement->BeamSweepStepTx();
+		m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
+	}
+	m_phyMacConfig->IncreaseCurrentSsSlotId();
+
+	Time slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
+	Simulator::Schedule (slotPeriod, &MmWaveEnbPhy::StartSsBlockSlot, this);
+}
+
 
 void
 MmWaveEnbPhy::EndSubFrame (void)
