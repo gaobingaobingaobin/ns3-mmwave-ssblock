@@ -584,37 +584,47 @@ MmWave3gppChannel::DoCalcRxPowerSpectralDensity (Ptr<const SpectrumValue> txPsd,
 			channelParams = GetNewChannel(table3gpp, locUT, los, o2i, txAntennaArray, rxAntennaArray,
 					txAntennaNum, rxAntennaNum, rxAngle, txAngle, relativeSpeed, distance2D, distance3D);
 		}
-		std::map< key_t, int >::iterator it1 = m_connectedPair.find (key);
-		if(it1 != m_connectedPair.end ())
+		// Beam management will update the beamforming vectors, but give initial values
+		if(Simulator::Now() == NanoSeconds(0.0))
 		{
-			if(m_cellScan)
-			{
-				BeamSearchBeamforming (rxPsd, channelParams,txAntennaArray,rxAntennaArray, txAntennaNum, rxAntennaNum);
-			}
-			else
-			{
-				LongTermCovMatrixBeamforming (channelParams);
-			}
-			if(Simulator::Now() == NanoSeconds(0))
-			{
-			txAntennaArray->SetBeamformingVector (channelParams->m_txW, rxDevice);
-			rxAntennaArray->SetBeamformingVector (channelParams->m_rxW, txDevice);
-			}
+			std::map< key_t, int >::iterator it1 = m_connectedPair.find (key);
+					if(it1 != m_connectedPair.end ())
+					{
+						if(m_cellScan)
+						{
+							BeamSearchBeamforming (rxPsd, channelParams,txAntennaArray,rxAntennaArray, txAntennaNum, rxAntennaNum);
+						}
+						else
+						{
+							LongTermCovMatrixBeamforming (channelParams);
+						}
+						if(Simulator::Now() == NanoSeconds(0)) //Give initial bfs
+						{
+						txAntennaArray->SetBeamformingVector (channelParams->m_txW, rxDevice);
+						rxAntennaArray->SetBeamformingVector (channelParams->m_rxW, txDevice);
+						}
+					}
+					else
+					{
+						NS_LOG_INFO("Not a connected pair");
+						channelParams->m_txW = txAntennaArray->GetBeamformingVector();
+						channelParams->m_rxW = rxAntennaArray->GetBeamformingVector();
+						if(channelParams->m_txW.size() == 0 || channelParams->m_rxW.size() == 0)
+						{
+							NS_LOG_INFO("channelParams->m_txW.size() == 0 " << (channelParams->m_txW.size() == 0));
+							NS_LOG_INFO("channelParams->m_rxW.size() == 0 " << (channelParams->m_rxW.size() == 0));
+							m_channelMap[key] = channelParams;
+							m_channelScanningMatrixMap[key] = Copy(channelParams);
+							return rxPsd;
+						}
+					}
 		}
 		else
 		{
-			NS_LOG_INFO("Not a connected pair");
 			channelParams->m_txW = txAntennaArray->GetBeamformingVector();
 			channelParams->m_rxW = rxAntennaArray->GetBeamformingVector();
-			if(channelParams->m_txW.size() == 0 || channelParams->m_rxW.size() == 0)
-			{
-				NS_LOG_INFO("channelParams->m_txW.size() == 0 " << (channelParams->m_txW.size() == 0));
-				NS_LOG_INFO("channelParams->m_rxW.size() == 0 " << (channelParams->m_rxW.size() == 0));
-				m_channelMap[key] = channelParams;
-				m_channelScanningMatrixMap[key] = Copy(channelParams);
-				return rxPsd;
-			}
 		}
+
 
 		CalLongTerm (channelParams);
 		m_channelMap[key] = channelParams;
@@ -3032,8 +3042,10 @@ MmWave3gppChannel::UpdateBfChannelMatrix(Ptr<NetDevice> ueDevice, Ptr<NetDevice>
 			pUePhy->GetDlSpectrumPhy ()->GetRxAntenna ());
 
 	//Update the bf vectors in the MmWaveSpectrumPhy
-	enbAntennaArray->SetBeamformingVector(channelParams->m_txW);
-	ueAntennaArray->SetBeamformingVector(channelParams->m_rxW);
+	enbAntennaArray->SetBeamformingVector(channelParams->m_txW,ueDevice);
+	ueAntennaArray->SetBeamformingVector(channelParams->m_rxW,enbDevice);
+//	enbAntennaArray->ChangeBeamformingVector(ueDevice);
+//	ueAntennaArray->ChangeBeamformingVector(enbDevice);
 
 }
 

@@ -109,7 +109,7 @@ main (int argc, char *argv[])
 
 
 	uint16_t nodeNum = 1;
-	double simStopTime = 4;
+	double simStopTime = 10;
 	bool harqEnabled = true;
 	bool rlcAmEnabled = true;
 	std::string protocol = "TcpCubic";
@@ -277,7 +277,7 @@ main (int argc, char *argv[])
   mmwaveHelper->SetUePhyArchitecture(Analog);
 
   // Set the SS burst set pattern. SsBurstPeriod must be smaller than SetSsBurstSetPeriod
-  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms160);
+  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms20);
   mmwaveHelper->SetSsBurstPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms10);
 
 	mmwaveHelper->Initialize();
