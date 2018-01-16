@@ -386,7 +386,7 @@ main (int argc, char *argv[])
   uemobility.SetPositionAllocator(uePositionAlloc);
   uemobility.Install (ueNodes);
 //  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (60, -20, hUT));
-  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
+  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (1, 0, 0));
 
   BuildingsHelper::Install (ueNodes);
 	// Install LTE Devices to the nodes
