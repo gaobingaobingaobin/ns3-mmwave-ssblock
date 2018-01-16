@@ -132,7 +132,7 @@ public:
    * \returns a pointer to the propagation loss model.
    */
   virtual Ptr<SpectrumPropagationLossModel> GetSpectrumPropagationLossModel (void);
-  virtual Ptr<PropagationLossModel> GetPropagationLossModel();
+
 
 protected:
   void DoDispose ();

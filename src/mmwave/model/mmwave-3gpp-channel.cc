@@ -2985,9 +2985,27 @@ MmWave3gppChannel::CalSnr (
 	Ptr<MmWaveSpectrumPhy> pSpectrumPhy = pMmwaveEnbPhy->GetDlSpectrumPhy();
 	Ptr<SpectrumChannel> pSectrumChannel = pSpectrumPhy->GetSpectrumChannel();
 	Ptr<MultiModelSpectrumChannel> pMultiSpectrumChannel = DynamicCast<MultiModelSpectrumChannel>(pSectrumChannel);
-	Ptr<PropagationLossModel> pLossModel = pMultiSpectrumChannel->GetPropagationLossModel();
+	//Ptr<PropagationLossModel> pLossModel = pMultiSpectrumChannel->GetPropagationLossModel();
+
+
+
 	double powerDbm = 0;
-	double pathLossDb = pLossModel->CalcRxPower(powerDbm,a,b);
+	double pathLossDb = 0;
+
+	if (DynamicCast<MmWave3gppPropagationLossModel> (m_3gppPathloss)!=0)
+	{
+		pathLossDb = m_3gppPathloss->GetObject<MmWave3gppPropagationLossModel> ()
+				->CalcRxPower(powerDbm,a,b);
+	}			// the GetObject trick is a trick against the const keyword
+	else if (DynamicCast<MmWave3gppBuildingsPropagationLossModel> (m_3gppPathloss)!=0)
+	{
+		pathLossDb = m_3gppPathloss->GetObject<MmWave3gppBuildingsPropagationLossModel> ()
+				->CalcRxPower(powerDbm,a,b);
+	}
+	else
+	{
+		NS_FATAL_ERROR("unknown pathloss model");
+	}
 
 	Sinr = Sinr * std::pow (10.0, (pathLossDb) / 10.0);
 
