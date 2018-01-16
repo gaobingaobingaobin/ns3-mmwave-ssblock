@@ -123,7 +123,7 @@ LteRlcAmHeader::PushExtensionBit (uint8_t extensionBit)
 }
 
 void
-LteRlcAmHeader::PushLengthIndicator (uint16_t lengthIndicator)
+LteRlcAmHeader::PushLengthIndicator (uint32_t lengthIndicator)
 {
   m_lengthIndicators.push_back (lengthIndicator);
 }
@@ -138,10 +138,10 @@ LteRlcAmHeader::PopExtensionBit (void)
   return extensionBit;
 }
 
-uint16_t
+uint32_t
 LteRlcAmHeader::PopLengthIndicator (void)
 {
-	uint16_t lengthIndicator;
+	uint32_t lengthIndicator;
 	if (!m_lengthIndicators.empty ())
 	{
 		lengthIndicator = m_lengthIndicators.front ();
@@ -196,7 +196,7 @@ LteRlcAmHeader::GetLastSegmentFlag (void) const
 
 
 void
-LteRlcAmHeader::SetSegmentOffset (uint16_t segmentOffset)
+LteRlcAmHeader::SetSegmentOffset (uint32_t segmentOffset)
 {
   m_segmentOffset = segmentOffset & 0x7FFF;
 }
@@ -318,7 +318,7 @@ void
 LteRlcAmHeader::Print (std::ostream &os)  const
 {
   std::list <uint8_t>::const_iterator it1 = m_extensionBits.begin ();
-  std::list <uint16_t>::const_iterator it2 = m_lengthIndicators.begin ();
+  std::list <uint32_t>::const_iterator it2 = m_lengthIndicators.begin ();
   std::list <int>::const_iterator it3 = m_nackSnList.begin ();
 
   os << "Len=" << m_headerLength;
@@ -351,7 +351,7 @@ LteRlcAmHeader::Print (std::ostream &os)  const
         }
       while ( it2 != m_lengthIndicators.end () )
         {
-          os << (uint16_t)(*it2) << " ";
+          os << (uint32_t)(*it2) << " ";
           it2++;
         }
     }
@@ -379,7 +379,7 @@ void LteRlcAmHeader::Serialize (Buffer::Iterator start) const
   Buffer::Iterator i = start;
 
   std::list <uint8_t>::const_iterator it1 = m_extensionBits.begin ();
-  std::list <uint16_t>::const_iterator it2 = m_lengthIndicators.begin ();
+  std::list <uint32_t>::const_iterator it2 = m_lengthIndicators.begin ();
   std::list <int>::const_iterator it3 = m_nackSnList.begin ();
 
   if ( m_dataControlBit == DATA_PDU )
@@ -543,7 +543,7 @@ uint32_t LteRlcAmHeader::Deserialize (Buffer::Iterator start)
           return GetSerializedSize ();
         }
 
-      uint16_t oddLi, evenLi;
+      uint32_t oddLi, evenLi;
       uint8_t oddE, evenE;
       bool moreLiFields = (extensionBit == E_LI_FIELDS_FOLLOWS);
 

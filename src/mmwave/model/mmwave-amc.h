@@ -49,9 +49,9 @@ public:
 	};
 
 	int GetMcsFromCqi (int cqi);
-	int GetTbSizeFromMcs (unsigned mcs, unsigned nprb);
-	int GetTbSizeFromMcsSymbols (unsigned mcs, unsigned nsym);  // for TDMA
-	int GetNumSymbolsFromTbsMcs (unsigned tbSize, unsigned mcs);
+	uint32_t GetTbSizeFromMcs (unsigned mcs, unsigned nprb);
+	uint32_t GetTbSizeFromMcsSymbols (unsigned mcs, unsigned nsym);  // for TDMA
+	int GetNumSymbolsFromTbsMcs (uint32_t tbSize, unsigned mcs);
 	std::vector<int> CreateCqiFeedbacks (const SpectrumValue& sinr, uint8_t rbgSize);
 	std::vector<int> CreateCqiFeedbacksTdma (const SpectrumValue& sinr, uint8_t numSym);
 	int CreateCqiFeedbackWbTdma (const SpectrumValue& sinr, uint8_t numSym, uint32_t tbs, int &mcsWb);

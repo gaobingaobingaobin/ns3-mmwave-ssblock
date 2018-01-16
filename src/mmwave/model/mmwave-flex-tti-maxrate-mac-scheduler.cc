@@ -704,7 +704,7 @@ MmWaveFlexTtiMaxRateMacScheduler::UpdateUlHarqProcessId (uint16_t rnti)
 //	return ((*it).second);
 }
 
-unsigned MmWaveFlexTtiMaxRateMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, unsigned bufSize, unsigned &tbSize)
+unsigned MmWaveFlexTtiMaxRateMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, unsigned bufSize, uint32_t &tbSize)
 {
 	// bisection line search to find minimum number of slots needed to encode entire buffer
 	MmWaveMacPduHeader dummyMacHeader;
@@ -1292,7 +1292,7 @@ MmWaveFlexTtiMaxRateMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSched
 
 			// distribute bytes between active RLC queues
 			unsigned numLc = ueInfo->m_rlcPduInfo.size ();
-			unsigned bytesRem = dci.m_tbSize;
+			uint32_t bytesRem = dci.m_tbSize;
 			unsigned numFulfilled = 0;
 			uint16_t avgPduSize = bytesRem / numLc;
 			// first for loop computes extra to add to average if some flows are less than average

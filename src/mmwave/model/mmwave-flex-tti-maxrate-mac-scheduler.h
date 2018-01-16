@@ -178,7 +178,7 @@ private:
 	}
 
 
-	unsigned CalcMinTbSizeNumSym (unsigned mcs, unsigned bufSize, unsigned &tbSize);
+	unsigned CalcMinTbSizeNumSym (unsigned mcs, unsigned bufSize, uint32_t &tbSize);
 
 	uint32_t
 	BsrId2BufferSize (uint8_t val)

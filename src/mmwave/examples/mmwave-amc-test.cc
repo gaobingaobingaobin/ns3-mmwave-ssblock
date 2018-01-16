@@ -76,7 +76,7 @@ void updateSnr (double snrInit, Ptr<MmWaveEnbNetDevice> enbDev, Ptr<SpectrumMode
   int mcsOrig = 0;
   while (true)
   {
-  	int tbs = amc->GetTbSizeFromMcsSymbols (mcsTmp, 22) / 8;
+  	uint32_t tbs = amc->GetTbSizeFromMcsSymbols (mcsTmp, 22) / 8;
   	amc->CreateCqiFeedbackWbTdma (specVals, 22, tbs, mcs);
   	if (mcs == mcsTmp || mcs == mcsOrig)
   	{

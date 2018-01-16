@@ -154,7 +154,7 @@ MmWaveAmc::GetMcsFromCqi (int cqi)
   return mcs;
 }
 
-int
+uint32_t
 MmWaveAmc::GetTbSizeFromMcs (unsigned mcs, unsigned nprb)
 {
 	NS_LOG_FUNCTION (mcs);
@@ -164,57 +164,57 @@ MmWaveAmc::GetTbSizeFromMcs (unsigned mcs, unsigned nprb)
 			(m_phyMacConfig->GetSymbPerSlot () - m_phyMacConfig->GetNumReferenceSymbols ());
 	double s = SpectralEfficiencyForMcs[mcs];
 
-	int tbSize = rscElement*s - m_crcLen;
-	uint16_t cbSize = 6144;  //max size of a code-block (including m_crcLen)
+	uint32_t tbSize = rscElement*s - m_crcLen;
+	uint32_t cbSize = 6144;  //max size of a code-block (including m_crcLen)
     if (tbSize > cbSize)
     {
-        int C = ceil ((double)tbSize / ((double)(6144)));
+    	uint32_t C = ceil ((double)tbSize / ((double)(6144)));
     	tbSize -= C*m_crcLen; //subtract bits of m_crcLen used in code-blocks.
     }
    	return tbSize;
 
 }
 
-int
+uint32_t
 MmWaveAmc::GetTbSizeFromMcsSymbols (unsigned mcs, unsigned nsymb)
 {
 	NS_LOG_FUNCTION (mcs);
 	NS_ASSERT_MSG (mcs < 29, "MCS=" << mcs);
 	//unsigned itb = McsToItbs[mcs];
-	int rscElement = (m_phyMacConfig->GetNumSCperChunk ()*m_phyMacConfig->GetTotalNumChunk()
+	uint32_t rscElement = (m_phyMacConfig->GetNumSCperChunk ()*m_phyMacConfig->GetTotalNumChunk()
 			- m_phyMacConfig->GetNumRefScPerSym ())*nsymb;
 	double Rcode = McsEcrTable[mcs];
 	double Qm = ModulationSchemeForMcs[mcs];
 
-	int tbSize = rscElement*Qm*Rcode - m_crcLen;
-	uint16_t cbSize = 6144;  //max size of a code-block (including m_crcLen)
+	uint32_t tbSize = rscElement*Qm*Rcode - m_crcLen;
+	uint32_t cbSize = 6144;  //max size of a code-block (including m_crcLen)
 	if (tbSize > cbSize)
 	{
-		int C = ceil ((double)tbSize / ((double)(6144)));
+		uint32_t C = ceil ((long double)tbSize / ((long double)(6144)));
 		tbSize -= C*m_crcLen; //subtract bits of m_crcLen used in code-blocks.
 	}
 	return tbSize;
 }
 
 int
-MmWaveAmc::GetNumSymbolsFromTbsMcs (unsigned tbSize, unsigned mcs)
+MmWaveAmc::GetNumSymbolsFromTbsMcs (uint32_t tbSize, unsigned mcs)
 {
 	NS_LOG_FUNCTION (mcs);
 	NS_ASSERT_MSG (mcs < 29, "MCS=" << mcs);
 	//unsigned itb = McsToItbs[mcs];
-	int rscElementPerSym = (m_phyMacConfig->GetNumSCperChunk ()*m_phyMacConfig->GetTotalNumChunk()
+	uint32_t rscElementPerSym = (m_phyMacConfig->GetNumSCperChunk ()*m_phyMacConfig->GetTotalNumChunk()
 			- m_phyMacConfig->GetNumRefScPerSym ());
 	double Rcode = McsEcrTable[mcs];
 	double Qm = ModulationSchemeForMcs[mcs];
-	uint16_t cbSize = 6144;  //max size of a code-block (including m_crcLen)
+	uint32_t cbSize = 6144;  //max size of a code-block (including m_crcLen)
 	if (tbSize > cbSize)
 	{
-		int C = ceil ((double)tbSize / ((double)(6144)));
+		uint32_t C = ceil ((long double)tbSize / ((long double)(6144)));
 		tbSize += C*m_crcLen; //subtract bits of m_crcLen used in code-blocks.
 	}
-	int reqRscElement = (tbSize+m_crcLen)/(Qm*Rcode);
+	uint32_t reqRscElement = (tbSize+m_crcLen)/(Qm*Rcode);
 
-	return ceil((double)reqRscElement / (double)rscElementPerSym);
+	return ceil((long double)reqRscElement / (long double)rscElementPerSym);
 }
 
 std::vector<int>

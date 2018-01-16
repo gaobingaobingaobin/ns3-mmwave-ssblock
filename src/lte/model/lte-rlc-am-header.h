@@ -83,10 +83,10 @@ public:
   } FramingInfoLastByte_t;
 
   void PushExtensionBit (uint8_t extensionBit);
-  void PushLengthIndicator (uint16_t lengthIndicator);
+  void PushLengthIndicator (uint32_t lengthIndicator);
 
   uint8_t PopExtensionBit (void);
-  uint16_t PopLengthIndicator (void);
+  uint32_t PopLengthIndicator (void);
 
   typedef enum {
     DATA_FIELD_FOLLOWS  = 0,
@@ -117,7 +117,7 @@ public:
     LAST_PDU_SEGMENT    = 1
   } LastSegmentFlag_t;
 
-  void SetSegmentOffset (uint16_t segmentOffset);
+  void SetSegmentOffset (uint32_t segmentOffset);
   uint16_t GetSegmentOffset () const;
   uint16_t GetLastOffset () const;
 
@@ -181,11 +181,11 @@ private:
   uint8_t  m_framingInfo;      //  2 bits
   SequenceNumber10 m_sequenceNumber;
   uint8_t  m_lastSegmentFlag;
-  uint16_t m_segmentOffset;
-  uint16_t m_lastOffset;
+  uint32_t m_segmentOffset;
+  uint32_t m_lastOffset;
 
   std::list <uint8_t> m_extensionBits; // Includes extensionBit of the fixed part
-  std::list <uint16_t> m_lengthIndicators;
+  std::list <uint32_t> m_lengthIndicators;
 
   // Control PDU fields
   uint8_t  m_controlPduType;

@@ -163,7 +163,7 @@ MmWavePhyMacCommon::MmWavePhyMacCommon ()
   m_symbolsPerSubframe (112),	// 24
   m_subframePeriod (1000.0),
   m_ctrlSymbols (1),
-  m_dlCtrlSymbols (4),	// 4 OFDM symbols for SS block. Former value was 1
+  m_dlCtrlSymbols (28),	// 4 OFDM symbols for SS block. Former value was 1
   m_ulCtrlSymbols (1),
   m_slotsPerSubframe (8),
   m_subframesPerFrame (10),
@@ -184,7 +184,7 @@ MmWavePhyMacCommon::MmWavePhyMacCommon ()
   m_ulSchedDelay (1),
 	m_wbCqiPeriodUs (500),
 	m_tbDecodeLatencyUs (100.0),
-	m_maxTbSizeBytes (0x7FFF),
+	m_maxTbSizeBytes (0x7FFFFFFF),
 	m_scs (SCS120KHz),		//Carlos modification
 	m_slotPeriod (125),
 	m_csiPeriodicReportPeriodicity(5),

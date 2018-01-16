@@ -74,8 +74,8 @@ public:
 	void RefreshDlCqiMaps (void);
 	void RefreshUlCqiMaps (void);
 
-	void UpdateDlRlcBufferInfo (uint16_t rnti, uint8_t lcid, uint16_t size);
-	void UpdateUlRlcBufferInfo (uint16_t rnti, uint16_t size);
+	void UpdateDlRlcBufferInfo (uint16_t rnti, uint8_t lcid, uint32_t size);
+	void UpdateUlRlcBufferInfo (uint16_t rnti, uint32_t size);
 
 	friend class MmWaveFlexTtiMacSchedSapProvider;
 	friend class MmWaveFlexTtiMacCschedSapProvider;
@@ -110,7 +110,7 @@ private:
 		bool			m_ulAllocDone;
 	};
 
-	unsigned CalcMinTbSizeNumSym (unsigned mcs, unsigned bufSize, unsigned &tbSize);
+	unsigned CalcMinTbSizeNumSym (unsigned mcs, unsigned bufSize, uint32_t &tbSize);
 
 	uint32_t
 	BsrId2BufferSize (uint8_t val)

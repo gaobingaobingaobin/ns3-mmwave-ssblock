@@ -608,17 +608,17 @@ MmWaveFlexTtiMacScheduler::UpdateUlHarqProcessId (uint16_t rnti)
 	return harqId;
 }
 
-unsigned MmWaveFlexTtiMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, unsigned bufSize, unsigned &tbSize)
+unsigned MmWaveFlexTtiMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, uint32_t bufSize, uint32_t &tbSize)
 {
 	// bisection line search to find minimum number of slots needed to encode entire buffer
 	MmWaveMacPduHeader dummyMacHeader;
 	//unsigned macHdrSize = 10; //dummyMacHeader.GetSerializedSize ();
-	int numSymLow = 0;
-	int numSymHigh = m_phyMacConfig->GetSymbolsPerSubframe();
+	unsigned numSymLow = 0;
+	unsigned numSymHigh = m_phyMacConfig->GetSymbolsPerSubframe();
 
-	int diff = 0;
+	unsigned diff = 0;
 	tbSize = (m_amc->GetTbSizeFromMcsSymbols (mcs, numSymHigh) / 8); // start with max value
-	while ((unsigned)tbSize > bufSize)
+	while (tbSize > bufSize)
 	{
 		diff = abs(numSymHigh-numSymLow)/2;
 		if (diff == 0)
@@ -627,11 +627,11 @@ unsigned MmWaveFlexTtiMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, unsigned 
 			return numSymHigh;
 		}
 		tbSize = (m_amc->GetTbSizeFromMcsSymbols (mcs, numSymHigh - diff) / 8);
-		if ((unsigned)tbSize > bufSize)
+		if (tbSize > bufSize)
 		{
 			numSymHigh -= diff;
 		}
-		while ((unsigned)tbSize < bufSize)
+		while (tbSize < bufSize)
 		{
 			diff = abs(numSymHigh-numSymLow)/2;
 			if (diff == 0)
@@ -641,7 +641,7 @@ unsigned MmWaveFlexTtiMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, unsigned 
 			}
 			//tmp2 = numSym;
 			tbSize = (m_amc->GetTbSizeFromMcsSymbols (mcs, numSymLow + diff) / 8);
-			if ((unsigned)tbSize < bufSize)
+			if (tbSize < bufSize)
 			{
 				numSymLow += diff;
 			}
@@ -649,7 +649,7 @@ unsigned MmWaveFlexTtiMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, unsigned 
 	}
 
 	tbSize = (m_amc->GetTbSizeFromMcsSymbols (mcs, numSymHigh) / 8);
-	return (unsigned)numSymHigh;
+	return numSymHigh;
 }
 
 void
@@ -679,7 +679,7 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 	int resvCtrl = m_phyMacConfig->GetDlCtrlSymbols() + m_phyMacConfig->GetUlCtrlSymbols();
 	int symAvail = m_phyMacConfig->GetSymbolsPerSubframe() - resvCtrl;
 	uint8_t slotIdx = 1;
-	uint8_t symIdx = m_phyMacConfig->GetDlCtrlSymbols(); // symbols reserved for control at beginning of subframe
+	uint16_t symIdx = m_phyMacConfig->GetDlCtrlSymbols(); // symbols reserved for control at beginning of subframe
 
 	// process received CQIs
 	RefreshDlCqiMaps ();
@@ -1133,23 +1133,8 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 	}
 
 	int nFlowsTot = nFlowsDl + nFlowsUl;
-	// Carlos modification: Uncomment uplink control sched
 	if (ueInfo.size () == 0)
 	{
-//		// FIXME: We add dummy slots (empty) to get the number of slots per subframe the 3GPP demands according the SCS
-//		SlotAllocInfo dummySlot;
-//		dummySlot.m_slotType = SlotAllocInfo::CTRL_DATA;
-//		dummySlot.m_tddMode = SlotAllocInfo::NA;
-//		dummySlot.m_dci.m_numSym = 1;
-//		dummySlot.m_dci.m_symStart = 0;
-//		for (uint8_t i = slotIdx; i < m_phyMacConfig->GetSlotsPerSubframe()-1; i++)
-//		{
-//			dummySlot.m_slotIdx = i;
-//			dummySlot.m_dci.m_symStart = i*m_phyMacConfig->GetSymbPerSlot();
-//			ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dummySlot);
-//		}
-
-		// add slot for UL control
 		SlotAllocInfo ulCtrlSlot (0xFF, SlotAllocInfo::UL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
 		ulCtrlSlot.m_dci.m_numSym = 1;
 		ulCtrlSlot.m_dci.m_symStart = m_phyMacConfig->GetSymbolsPerSubframe()-1;
@@ -1157,7 +1142,6 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 		m_macSchedSapUser->SchedConfigInd (ret);
 		return;
 	}
-	// End of Carlos modification
 
 	// compute requested num slots and TB size based on MCS and DL buffer size
 	// final allocated slots may be less
@@ -1165,15 +1149,15 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 	int totUlSymReq = 0;
 	for (itUeInfo = ueInfo.begin (); itUeInfo != ueInfo.end (); itUeInfo++)
 	{
-		unsigned dlTbSize = 0;
-		unsigned ulTbSize = 0;
+		uint32_t dlTbSize = 0;
+		uint32_t ulTbSize = 0;
 		if (itUeInfo->second.m_maxDlBufSize > 0)
 		{
 			itUeInfo->second.m_maxDlSymbols = CalcMinTbSizeNumSym (itUeInfo->second.m_dlMcs, itUeInfo->second.m_maxDlBufSize, dlTbSize);
 			itUeInfo->second.m_maxDlBufSize = dlTbSize;
 			if (m_fixedTti)
 			{
-				itUeInfo->second.m_maxDlSymbols = ceil((double)itUeInfo->second.m_maxDlSymbols/(double)m_symPerSlot) * m_symPerSlot; // round up to nearest sym per TTI
+				itUeInfo->second.m_maxDlSymbols = ceil((long double)itUeInfo->second.m_maxDlSymbols/(long double)m_symPerSlot) * m_symPerSlot; // round up to nearest sym per TTI
 			}
 			totDlSymReq += itUeInfo->second.m_maxDlSymbols;
 		}
@@ -1398,9 +1382,9 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 
 			// distribute bytes between active RLC queues
 			unsigned numLc = ueSchedInfo.m_rlcPduInfo.size ();
-			unsigned bytesRem = dci.m_tbSize;
+			uint32_t bytesRem = dci.m_tbSize;
 			unsigned numFulfilled = 0;
-			uint16_t avgPduSize = bytesRem / numLc;
+			uint32_t avgPduSize = bytesRem / numLc;
 			// first for loop computes extra to add to average if some flows are less than average
 			for (unsigned i = 0; i < ueSchedInfo.m_rlcPduInfo.size (); i++)
 			{
@@ -1693,7 +1677,7 @@ MmWaveFlexTtiMacScheduler::RefreshUlCqiMaps (void)
 }
 
 void
-MmWaveFlexTtiMacScheduler::UpdateDlRlcBufferInfo (uint16_t rnti, uint8_t lcid, uint16_t size)
+MmWaveFlexTtiMacScheduler::UpdateDlRlcBufferInfo (uint16_t rnti, uint8_t lcid, uint32_t size)
 {
   NS_LOG_FUNCTION (this);
   std::list<MmWaveMacSchedSapProvider::SchedDlRlcBufferReqParameters>::iterator it;
@@ -1752,7 +1736,7 @@ MmWaveFlexTtiMacScheduler::UpdateDlRlcBufferInfo (uint16_t rnti, uint8_t lcid, u
 }
 
 void
-MmWaveFlexTtiMacScheduler::UpdateUlRlcBufferInfo (uint16_t rnti, uint16_t size)
+MmWaveFlexTtiMacScheduler::UpdateUlRlcBufferInfo (uint16_t rnti, uint32_t size)
 {
 
   size = size - 2; // remove the minimum RLC overhead

@@ -114,9 +114,9 @@ main (int argc, char *argv[])
 	bool rlcAmEnabled = true;
 	std::string protocol = "TcpCubic";
 	//int bufferSize = 1000 *1000 * 3.5 * 0.4;
-	int bufferSize = 8000000;
-	int packetSize = 14000;
-	int p2pDelay = 9;
+	uint32_t bufferSize = 8000000;
+	uint32_t packetSize = 14000;
+	uint32_t p2pDelay = 9;
 	// This 3GPP channel model example only demonstrate the pathloss model. The fast fading model is still in developing.
 
 	//The available channel scenarios are 'RMa', 'UMa', 'UMi-StreetCanyon', 'InH-OfficeMixed', 'InH-OfficeOpen', 'InH-ShoppingMall'
@@ -151,11 +151,11 @@ main (int argc, char *argv[])
 	Config::SetDefault ("ns3::MmWaveFlexTtiMacScheduler::HarqEnabled", BooleanValue(true));
 	Config::SetDefault ("ns3::MmWaveFlexTtiMaxWeightMacScheduler::HarqEnabled", BooleanValue(true));
 	Config::SetDefault ("ns3::MmWaveFlexTtiMacScheduler::HarqEnabled", BooleanValue(true));
-	Config::SetDefault ("ns3::LteRlcAm::PollRetransmitTimer", TimeValue(MilliSeconds(2.0)));
-	Config::SetDefault ("ns3::LteRlcAm::ReorderingTimer", TimeValue(MilliSeconds(1.0)));
-	Config::SetDefault ("ns3::LteRlcAm::StatusProhibitTimer", TimeValue(MilliSeconds(1.0)));
-	Config::SetDefault ("ns3::LteRlcAm::ReportBufferStatusTimer", TimeValue(MilliSeconds(2.0)));
-	Config::SetDefault ("ns3::LteRlcAm::MaxTxBufferSize", UintegerValue (bufferSize));
+//	Config::SetDefault ("ns3::LteRlcAm::PollRetransmitTimer", TimeValue(MilliSeconds(2.0)));
+//	Config::SetDefault ("ns3::LteRlcAm::ReorderingTimer", TimeValue(MilliSeconds(1.0)));
+//	Config::SetDefault ("ns3::LteRlcAm::StatusProhibitTimer", TimeValue(MilliSeconds(1.0)));
+//	Config::SetDefault ("ns3::LteRlcAm::ReportBufferStatusTimer", TimeValue(MilliSeconds(2.0)));
+	Config::SetDefault ("ns3::LteRlcUm::MaxTxBufferSize", UintegerValue (bufferSize));
     //Config::SetDefault ("ns3::QueueBase::MaxPackets", UintegerValue (100*1000));
 
 	//Config::SetDefault ("ns3::CoDelQueueDisc::Mode", StringValue ("QUEUE_DISC_MODE_PACKETS"));
@@ -273,8 +273,8 @@ main (int argc, char *argv[])
 	mmwaveHelper->SetAttribute ("ChannelModel", StringValue ("ns3::MmWave3gppChannel"));
 
 	// Set the transceiver architectures
-  mmwaveHelper->SetEnbPhyArchitecture(Analog);
-  mmwaveHelper->SetUePhyArchitecture(Analog);
+  mmwaveHelper->SetEnbPhyArchitecture(Digital);
+  mmwaveHelper->SetUePhyArchitecture(Digital);
 
   // Set the SS burst set pattern. SsBurstPeriod must be smaller than SetSsBurstSetPeriod
   mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms20);

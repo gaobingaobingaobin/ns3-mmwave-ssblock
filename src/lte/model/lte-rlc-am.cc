@@ -524,8 +524,8 @@ LteRlcAm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId)
 									}
 
 								  // segment packet
-								  uint16_t firstPduSegSize = bytes - firstSegHdr.GetSerializedSize ();
-								  uint16_t nextPduSegSize = packet->GetSize ()-firstPduSegSize;
+								  uint32_t firstPduSegSize = bytes - firstSegHdr.GetSerializedSize ();
+								  uint32_t nextPduSegSize = packet->GetSize ()-firstPduSegSize;
 								  Ptr<Packet> firstSeg = packet->CreateFragment (0, firstPduSegSize);
 								  Ptr<Packet> nextSeg = packet->CreateFragment (firstPduSegSize, nextPduSegSize);
 
@@ -1481,7 +1481,7 @@ LteRlcAm::ReassembleAndDeliver (Ptr<Packet> packet)
 
   // Build list of SDUs
   uint8_t extensionBit;
-  uint16_t lengthIndicator;
+  uint32_t lengthIndicator;
   do
     {
       extensionBit = rlcAmHeader.PopExtensionBit ();
@@ -1502,12 +1502,11 @@ LteRlcAm::ReassembleAndDeliver (Ptr<Packet> packet)
               NS_LOG_LOGIC ("INTERNAL ERROR: Not enough data in the packet (" << packet->GetSize () << "). Needed LI=" << lengthIndicator);
               /// \todo What to do in this case? Discard packet and continue? Or Assert?
             }
+			  // Split packet in two fragments
+			  Ptr<Packet> data_field = packet->CreateFragment (0, lengthIndicator);
+			  packet->RemoveAtStart (lengthIndicator);
 
-          // Split packet in two fragments
-          Ptr<Packet> data_field = packet->CreateFragment (0, lengthIndicator);
-          packet->RemoveAtStart (lengthIndicator);
-
-          m_sdusBuffer.push_back (data_field);
+			  m_sdusBuffer.push_back (data_field);
         }
     }
   while ( extensionBit == 1 );

@@ -132,7 +132,7 @@ struct UlDciListElement_s
   uint16_t  m_rnti;
   uint8_t   m_rbStart;
   uint8_t   m_rbLen;
-  uint16_t  m_tbSize;
+  uint32_t  m_tbSize;
   uint8_t   m_mcs;
   uint8_t   m_ndi;
   uint8_t   m_cceIndex;
@@ -244,7 +244,7 @@ struct UlGrant_s
   uint16_t m_rnti;
   uint8_t m_rbStart;
   uint8_t m_rbLen;
-  uint16_t m_tbSize;
+  uint32_t m_tbSize;
   uint8_t m_mcs;
   bool m_hopping;
   int8_t m_tpc;
