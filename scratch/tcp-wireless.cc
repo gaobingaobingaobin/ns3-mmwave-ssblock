@@ -223,14 +223,14 @@ main (int argc, char *argv[])
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::ChannelCondition", StringValue(condition));
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Scenario", StringValue(scenario));
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::OptionalNlos", BooleanValue(false));
-	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Shadowing", BooleanValue(false)); // enable or disable the shadowing effect
+	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Shadowing", BooleanValue(true)); // enable or disable the shadowing effect
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::InCar", BooleanValue(false)); // enable or disable the shadowing effect
 
 
 
 	Config::SetDefault ("ns3::MmWave3gppChannel::UpdatePeriod", TimeValue (MilliSeconds (100))); // Set channel update period, 0 stands for no update.
 	Config::SetDefault ("ns3::MmWave3gppChannel::CellScan", BooleanValue(false)); // Set true to use cell scanning method, false to use the default power method.
-	Config::SetDefault ("ns3::MmWave3gppChannel::Blockage", BooleanValue(true)); // use blockage or not
+	Config::SetDefault ("ns3::MmWave3gppChannel::Blockage", BooleanValue(false)); // use blockage or not
 	Config::SetDefault ("ns3::MmWave3gppChannel::PortraitMode", BooleanValue(true)); // use blockage model with UT in portrait mode
 	Config::SetDefault ("ns3::MmWave3gppChannel::NumNonselfBlocking", IntegerValue(4)); // number of non-self blocking obstacles
 	Config::SetDefault ("ns3::MmWave3gppChannel::BlockerSpeed", DoubleValue(1)); // speed of non-self blocking obstacles
@@ -273,8 +273,8 @@ main (int argc, char *argv[])
 	mmwaveHelper->SetAttribute ("ChannelModel", StringValue ("ns3::MmWave3gppChannel"));
 
 	// Set the transceiver architectures
-  mmwaveHelper->SetEnbPhyArchitecture(Digital);
-  mmwaveHelper->SetUePhyArchitecture(Digital);
+  mmwaveHelper->SetEnbPhyArchitecture(Analog);
+  mmwaveHelper->SetUePhyArchitecture(Analog);
 
   // Set the SS burst set pattern. SsBurstPeriod must be smaller than SetSsBurstSetPeriod
   mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms20);
@@ -352,11 +352,11 @@ main (int argc, char *argv[])
 
 
 
-	Ptr < Building > building1;
-	building1 = Create<Building> ();
-	building1->SetBoundaries (Box (-100,100.0,
-								10, 20.0,
-								0.0, 40));
+//	Ptr < Building > building1;
+//	building1 = Create<Building> ();
+//	building1->SetBoundaries (Box (-100,100.0,
+//								10, 20.0,
+//								0.0, 40));
 
 
 
@@ -378,7 +378,7 @@ main (int argc, char *argv[])
 
 	MobilityHelper uemobility;
   Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
-  uePositionAlloc->Add (Vector (-20.0, -20.0, hUT));
+  uePositionAlloc->Add (Vector (-80.0, -20.0, hUT));
 
 
 //  uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -386,7 +386,7 @@ main (int argc, char *argv[])
   uemobility.SetPositionAllocator(uePositionAlloc);
   uemobility.Install (ueNodes);
 //  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (60, -20, hUT));
-  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (1, 0, 0));
+  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (30, 0, 0));
 
   BuildingsHelper::Install (ueNodes);
 	// Install LTE Devices to the nodes

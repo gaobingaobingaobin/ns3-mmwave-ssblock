@@ -3053,6 +3053,7 @@ MmWave3gppChannel::UpdateBfChannelMatrix(Ptr<NetDevice> ueDevice, Ptr<NetDevice>
 	}
 	channelParams->m_txW = pMngEnb->GetBeamSweepVector(bestBeams.m_txBeamId);
 	channelParams->m_rxW = pMngUe->GetBeamSweepVector(bestBeams.m_rxBeamId);
+	CalLongTerm (channelParams);
 
 	Ptr<AntennaArrayModel> enbAntennaArray = DynamicCast<AntennaArrayModel> (
 			pEnbPhy->GetDlSpectrumPhy ()->GetRxAntenna ());

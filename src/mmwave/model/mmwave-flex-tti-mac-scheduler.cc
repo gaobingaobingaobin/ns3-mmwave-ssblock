@@ -620,7 +620,7 @@ unsigned MmWaveFlexTtiMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, uint32_t 
 	tbSize = (m_amc->GetTbSizeFromMcsSymbols (mcs, numSymHigh) / 8); // start with max value
 	while (tbSize > bufSize)
 	{
-		diff = abs(numSymHigh-numSymLow)/2;
+		diff = abs((int)numSymHigh-(int)numSymLow)/2;
 		if (diff == 0)
 		{
 			tbSize = (m_amc->GetTbSizeFromMcsSymbols (mcs, numSymHigh) / 8);
@@ -633,7 +633,7 @@ unsigned MmWaveFlexTtiMacScheduler::CalcMinTbSizeNumSym (unsigned mcs, uint32_t 
 		}
 		while (tbSize < bufSize)
 		{
-			diff = abs(numSymHigh-numSymLow)/2;
+			diff = abs((int)numSymHigh-(int)numSymLow)/2;
 			if (diff == 0)
 			{
 				tbSize = (m_amc->GetTbSizeFromMcsSymbols (mcs, numSymHigh) / 8);
