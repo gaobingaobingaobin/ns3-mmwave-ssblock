@@ -114,7 +114,8 @@ main (int argc, char *argv[])
 	bool rlcAmEnabled = true;
 	std::string protocol = "TcpCubic";
 	//int bufferSize = 1000 *1000 * 3.5 * 0.4;
-	uint32_t bufferSize = 8000000;
+	uint32_t bufferSize = 80000;
+	//uint32_t bufferSize = 8000000;
 	uint32_t packetSize = 14000;
 	uint32_t p2pDelay = 9;
 	// This 3GPP channel model example only demonstrate the pathloss model. The fast fading model is still in developing.
@@ -223,7 +224,7 @@ main (int argc, char *argv[])
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::ChannelCondition", StringValue(condition));
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Scenario", StringValue(scenario));
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::OptionalNlos", BooleanValue(false));
-	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Shadowing", BooleanValue(true)); // enable or disable the shadowing effect
+	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::Shadowing", BooleanValue(false)); // enable or disable the shadowing effect
 	Config::SetDefault ("ns3::MmWave3gppPropagationLossModel::InCar", BooleanValue(false)); // enable or disable the shadowing effect
 
 
@@ -277,8 +278,8 @@ main (int argc, char *argv[])
   mmwaveHelper->SetUePhyArchitecture(Analog);
 
   // Set the SS burst set pattern. SsBurstPeriod must be smaller than SetSsBurstSetPeriod
-  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms20);
-  mmwaveHelper->SetSsBurstPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms10);
+  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms160);
+  mmwaveHelper->SetSsBurstPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms5);
 
 	mmwaveHelper->Initialize();
 	mmwaveHelper->SetHarqEnabled(true);
@@ -378,7 +379,7 @@ main (int argc, char *argv[])
 
 	MobilityHelper uemobility;
   Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
-  uePositionAlloc->Add (Vector (-80.0, -20.0, hUT));
+  uePositionAlloc->Add (Vector (-180.0, -50.0, hUT));
 
 
 //  uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -386,7 +387,7 @@ main (int argc, char *argv[])
   uemobility.SetPositionAllocator(uePositionAlloc);
   uemobility.Install (ueNodes);
 //  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (60, -20, hUT));
-  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (30, 0, 0));
+  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
 
   BuildingsHelper::Install (ueNodes);
 	// Install LTE Devices to the nodes

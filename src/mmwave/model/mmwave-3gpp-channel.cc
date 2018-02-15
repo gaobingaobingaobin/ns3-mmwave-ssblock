@@ -590,14 +590,27 @@ MmWave3gppChannel::DoCalcRxPowerSpectralDensity (Ptr<const SpectrumValue> txPsd,
 			std::map< key_t, int >::iterator it1 = m_connectedPair.find (key);
 					if(it1 != m_connectedPair.end ())
 					{
-						if(m_cellScan)
+						/*if(m_cellScan)
 						{
 							BeamSearchBeamforming (rxPsd, channelParams,txAntennaArray,rxAntennaArray, txAntennaNum, rxAntennaNum);
 						}
 						else
 						{
 							LongTermCovMatrixBeamforming (channelParams);
+						}*/
+
+							channelParams->m_txW.push_back(1);
+							channelParams->m_rxW.push_back(1);
+
+						for (uint8_t eIndex = 1; eIndex < txAntennaNum[0]*txAntennaNum[1]; eIndex++)
+						{
+							channelParams->m_txW.push_back(0);
 						}
+						for (uint8_t eIndex = 1; eIndex < rxAntennaNum[0]*rxAntennaNum[1]; eIndex++)
+						{
+							channelParams->m_rxW.push_back(0);
+						}
+
 						if(Simulator::Now() == NanoSeconds(0)) //Give initial bfs
 						{
 						txAntennaArray->SetBeamformingVector (channelParams->m_txW, rxDevice);

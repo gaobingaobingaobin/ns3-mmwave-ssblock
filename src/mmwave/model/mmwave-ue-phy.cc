@@ -887,8 +887,8 @@ MmWaveUePhy::CreateDlCqiFeedbackMessage (const SpectrumValue& sinr)
 		m_amc = CreateObject <MmWaveAmc> (m_phyMacConfig);
 	}
 	NS_LOG_FUNCTION (this);
-//	SpectrumValue newSinr = sinr;
-	SpectrumValue newSinr = m_beamManagement->GetBestScannedBeamPair().m_sinrPsd;
+	SpectrumValue newSinr = sinr;
+	//SpectrumValue newSinr = m_beamManagement->GetBestScannedBeamPair().m_sinrPsd;
 	// CREATE DlCqiLteControlMessage
 	Ptr<MmWaveDlCqiMessage> msg = Create<MmWaveDlCqiMessage> ();
 	DlCqiInfo dlcqi;
@@ -937,8 +937,8 @@ MmWaveUePhy::GenerateDlCqiReport (const SpectrumValue& sinr)
 	{
 		if (Simulator::Now () > m_wbCqiLast + m_wbCqiPeriod)
 		{
-//			SpectrumValue newSinr = sinr;
-			SpectrumValue newSinr = m_beamManagement->GetBestScannedBeamPair().m_sinrPsd;
+			SpectrumValue newSinr = sinr;
+			//SpectrumValue newSinr = m_beamManagement->GetBestScannedBeamPair().m_sinrPsd;
 			Ptr<MmWaveDlCqiMessage> msg = CreateDlCqiFeedbackMessage (newSinr);
 
 			if (msg)
