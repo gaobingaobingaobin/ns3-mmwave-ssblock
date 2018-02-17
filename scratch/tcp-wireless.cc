@@ -114,8 +114,8 @@ main (int argc, char *argv[])
 	bool rlcAmEnabled = true;
 	std::string protocol = "TcpCubic";
 	//int bufferSize = 1000 *1000 * 3.5 * 0.4;
-	uint32_t bufferSize = 80000;
-	//uint32_t bufferSize = 8000000;
+	//uint32_t bufferSize = 80000;
+	uint32_t bufferSize = 5000000;
 	uint32_t packetSize = 14000;
 	uint32_t p2pDelay = 9;
 	// This 3GPP channel model example only demonstrate the pathloss model. The fast fading model is still in developing.
@@ -278,7 +278,7 @@ main (int argc, char *argv[])
   mmwaveHelper->SetUePhyArchitecture(Analog);
 
   // Set the SS burst set pattern. SsBurstPeriod must be smaller than SetSsBurstSetPeriod
-  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms160);
+  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms20);
   mmwaveHelper->SetSsBurstPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms5);
 
 	mmwaveHelper->Initialize();

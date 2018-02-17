@@ -63,6 +63,8 @@ MmWaveUePhy::MmWaveUePhy (Ptr<MmWaveSpectrumPhy> dlPhy, Ptr<MmWaveSpectrumPhy> u
 	Simulator::ScheduleNow (&MmWaveUePhy::SubframeIndication, this, 0, 0);
 	m_csiReportCounter = 5;
 	m_currentState = CELL_SEARCH;
+	m_bestTxBeamId = 0;
+	m_bestRxBeamId = 0;
 }
 
 MmWaveUePhy::~MmWaveUePhy ()
@@ -724,8 +726,12 @@ MmWaveUePhy::StartSsBlockSlot()
 //				m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
 				// If ss slot id is zero for the first time get the best serving enb and pair of beams
 				// This means that all beams have been measured and the UE selects the best one
-				if(m_beamManagement->GetCurrentBeamId() == 0)
+
+				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
+				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
 				{
+					m_bestTxBeamId = bestBeams.m_txBeamId;
+					m_bestRxBeamId = bestBeams.m_rxBeamId;
 					m_beamManagement->UpdateBestScannedEnb();
 					UpdateChannelMap();
 					if (GetCurrentState() == CELL_SEARCH)
@@ -790,22 +796,31 @@ MmWaveUePhy::StartSsBlockSlot()
 			uint16_t txBeamId = m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
 			if (txBeamId == 64)	//FIXME: Implement a method to obtain the codebook length
 			{
-				m_beamManagement->UpdateBestScannedEnb();
-				UpdateChannelMap();
-				if (GetCurrentState() == CELL_SEARCH)
+
+				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
+				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
 				{
-					//Attach to eNB and change state to SYNCRONIZED
-//					uint16_t cellId = m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice->GetObject<MmWaveEnbNetDevice> ()->GetCellId ();
-//					RegisterToEnb (cellId, m_phyMacConfig);
-					SetCurrentState(SYNCHRONIZED);	// This is called in RegisterToEnb method
+					m_bestTxBeamId = bestBeams.m_txBeamId;
+					m_bestRxBeamId = bestBeams.m_rxBeamId;
+
+					
+					m_beamManagement->UpdateBestScannedEnb();
+					UpdateChannelMap();
+					if (GetCurrentState() == CELL_SEARCH)
+					{
+						//Attach to eNB and change state to SYNCRONIZED
+	//					uint16_t cellId = m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice->GetObject<MmWaveEnbNetDevice> ()->GetCellId ();
+	//					RegisterToEnb (cellId, m_phyMacConfig);
+						SetCurrentState(SYNCHRONIZED);	// This is called in RegisterToEnb method
+					}
+					else
+					{
+						//TODO: Attach to the eNB if it is a different one
+						SetCurrentState(SYNCHRONIZED);
+					}
+					// Reset counter: this is now scheduled every SS burst set period. See MmWaveUePhy::DoInitialize()
+	//				m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
 				}
-				else
-				{
-					//TODO: Attach to the eNB if it is a different one
-					SetCurrentState(SYNCHRONIZED);
-				}
-				// Reset counter: this is now scheduled every SS burst set period. See MmWaveUePhy::DoInitialize()
-//				m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
 
 			}
 

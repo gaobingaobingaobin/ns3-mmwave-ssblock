@@ -230,6 +230,9 @@ private:
 	State m_currentState;
 	// End of Carlos modification
 
+	uint16_t m_bestTxBeamId;
+	uint16_t m_bestRxBeamId;
+
 };
 
 
