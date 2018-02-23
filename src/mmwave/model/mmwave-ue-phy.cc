@@ -731,12 +731,10 @@ MmWaveUePhy::StartSsBlockSlot()
 				// If ss slot id is zero for the first time get the best serving enb and pair of beams
 				// This means that all beams have been measured and the UE selects the best one
 
-				if(m_beamManagement->GetCurrentBeamId() == 0)
-//				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
-//				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
+				m_beamManagement->UpdateBestScannedEnb();
+				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
+				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
 				{
-					m_beamManagement->UpdateBestScannedEnb();
-					BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
 					m_bestTxBeamId = bestBeams.m_txBeamId;
 					m_bestRxBeamId = bestBeams.m_rxBeamId;
 					UpdateChannelMap();
@@ -802,11 +800,10 @@ MmWaveUePhy::StartSsBlockSlot()
 			uint16_t txBeamId = m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
 			if (txBeamId == 64)	//FIXME: Implement a method to obtain the codebook length
 			{
-
-//				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
-//				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
+				m_beamManagement->UpdateBestScannedEnb();
+				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
+				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
 				{
-					m_beamManagement->UpdateBestScannedEnb();
 					UpdateChannelMap();
 
 					BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
