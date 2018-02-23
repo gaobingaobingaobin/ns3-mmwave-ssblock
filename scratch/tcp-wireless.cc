@@ -124,6 +124,16 @@ main (int argc, char *argv[])
 	std::string scenario = "UMa";
 	std::string condition = "a";
 
+
+	/* Read arguments from shell script */
+	enum Architecture arch = Analog;
+	std::string sArch = "Analog";
+	MmWavePhyMacCommon::SsBurstPeriods ssburstset = MmWavePhyMacCommon::ms20;
+	std::string stringSsBurstSet = "ms20";
+	float speed = 1.0;
+	unsigned los_profile = 0;	//select the LOS situation: 0=only LOS, 1=LOS-NLOS-LOS
+	unsigned seed = 0;
+
 	CommandLine cmd;
 //	cmd.AddValue("numEnb", "Number of eNBs", numEnb);
 //	cmd.AddValue("numUe", "Number of UEs per eNB", numUe);
@@ -135,6 +145,12 @@ main (int argc, char *argv[])
 	cmd.AddValue("bufferSize", "buffer size", bufferSize);
 	cmd.AddValue("packetSize", "packet size", packetSize);
 	cmd.AddValue("p2pDelay","delay between server and PGW", p2pDelay);
+	cmd.AddValue("arch","Beamforming architecture",sArch);
+	cmd.AddValue("ssburstset", "SS burst set period", stringSsBurstSet);
+	cmd.AddValue("speed","UE speed",speed);
+	cmd.AddValue("obstacle","LOS condition profile",los_profile);
+	cmd.AddValue("seed", "Simulation run seed", seed);
+
 	cmd.Parse(argc, argv);
 
 	//Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (65535));
@@ -213,9 +229,67 @@ main (int argc, char *argv[])
     }
     else
     {
-		std::cout<<protocol<<" Unkown protocol.\n";
+		std::cout<<protocol<<" Unknown protocol.\n";
 		return 1;
     }
+
+
+
+    // Beamforming architecture
+	if(sArch == "Analog")
+	{
+		arch = Analog;
+//		std::cout << "Analog architecture" << std::endl;
+	}
+	else if (sArch == "Digital")
+	{
+		arch = Digital;
+//		std::cout << "Digital architecture" << std::endl;
+	}
+	else
+	{
+		NS_LOG_ERROR("Unsupported or unrecognized beamforming architecture. Choose Analog or Digital");
+	}
+
+
+	// SS Burst Set period
+	if(stringSsBurstSet == "ms5")
+	{
+		ssburstset = MmWavePhyMacCommon::ms5;
+	}
+	else if (stringSsBurstSet == "ms10")
+	{
+		ssburstset = MmWavePhyMacCommon::ms10;
+	}
+	else if (stringSsBurstSet == "ms20")
+	{
+		ssburstset = MmWavePhyMacCommon::ms20;
+	}
+	else if (stringSsBurstSet == "ms40")
+	{
+		ssburstset = MmWavePhyMacCommon::ms40;
+	}
+	else if (stringSsBurstSet == "ms80")
+	{
+		ssburstset = MmWavePhyMacCommon::ms80;
+	}
+	else if (stringSsBurstSet == "ms160")
+	{
+		ssburstset = MmWavePhyMacCommon::ms160;
+	}
+	else
+	{
+		NS_LOG_ERROR("Unsupported or unrecognized SS periodicity. Choose among ms5, ms10, ms20, ms40, ms80 or ms160");
+	}
+
+	/*
+	 *  The more statistically rigorous way to configure multiple independent
+	 *  replications is to use a fixed seed and to advance the run number.
+	 */
+	RngSeedManager::SetSeed (1);
+	RngSeedManager::SetRun(seed);
+
+
 	Config::SetDefault ("ns3::TcpVegas::Alpha", UintegerValue (20));
 	Config::SetDefault ("ns3::TcpVegas::Beta", UintegerValue (40));
 	Config::SetDefault ("ns3::TcpVegas::Gamma", UintegerValue (2));
@@ -263,7 +337,7 @@ main (int argc, char *argv[])
 	}
 	else
 	{
-		std::cout<<"Unkown scenario.\n";
+		std::cout<<"Unknown scenario.\n";
 		return 1;
 	}
 
@@ -274,12 +348,11 @@ main (int argc, char *argv[])
 	mmwaveHelper->SetAttribute ("ChannelModel", StringValue ("ns3::MmWave3gppChannel"));
 
 	// Set the transceiver architectures
-  mmwaveHelper->SetEnbPhyArchitecture(Analog);
-  mmwaveHelper->SetUePhyArchitecture(Analog);
+  mmwaveHelper->SetEnbPhyArchitecture(arch);
+  mmwaveHelper->SetUePhyArchitecture(arch);
 
   // Set the SS burst set pattern. SsBurstPeriod must be smaller than SetSsBurstSetPeriod
-  mmwaveHelper->SetSsBurstSetPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms20);
-  mmwaveHelper->SetSsBurstPeriod(MmWavePhyMacCommon::SsBurstPeriods::ms5);
+  mmwaveHelper->SetSsBurstSetPeriod(ssburstset);
 
 	mmwaveHelper->Initialize();
 	mmwaveHelper->SetHarqEnabled(true);
@@ -351,7 +424,18 @@ main (int argc, char *argv[])
 								11.0, 11.5,
 								0.0, 40));*/
 
-
+	// Be careful not to locate the UE inside the building
+	if (los_profile > 0)
+	{
+		Ptr < Building > building1;
+		building1 = Create<Building> ();
+//		building1->SetBoundaries (Box (-15,-12.0,
+//									-14, -12.0,
+//									0.0, 20));
+		building1->SetBoundaries (Box (-100,100.0,
+								10, 20.0,
+								0.0, 40));
+	}
 
 //	Ptr < Building > building1;
 //	building1 = Create<Building> ();
@@ -387,7 +471,7 @@ main (int argc, char *argv[])
   uemobility.SetPositionAllocator(uePositionAlloc);
   uemobility.Install (ueNodes);
 //  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (60, -20, hUT));
-  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
+  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (speed, 0, 0));
 
   BuildingsHelper::Install (ueNodes);
 	// Install LTE Devices to the nodes

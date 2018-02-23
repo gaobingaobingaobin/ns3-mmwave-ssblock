@@ -182,8 +182,8 @@ MmWaveEnbPhy::DoInitialize (void)
 //	Ptr<MmWaveBeamManagement> mng = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement->InitializeBeamSweepingTx(beamPeriodicityTime);
-	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
-	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
+//	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
+//	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
 	StartSsBlockSlot();
 	// End of Carlos modification
 
@@ -407,7 +407,9 @@ MmWaveEnbPhy::StartSlot (void)
 		}
 
 		// TX control period
-		slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSymbolPeriod ()*m_phyMacConfig->GetDlCtrlSymbols());
+//		slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSymbolPeriod ()*m_phyMacConfig->GetDlCtrlSymbols());
+		uint32_t DlCtrlSymbols = m_phyMacConfig->GetDlCtrlSymbols(m_frameNum,m_sfNum);
+		slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSymbolPeriod ()*DlCtrlSymbols);
 		NS_LOG_DEBUG ("ENB TXing DL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1)
 		              << "\t start " << Simulator::Now() << " end " << Simulator::Now() + slotPeriod-NanoSeconds(1.0));
@@ -549,17 +551,31 @@ MmWaveEnbPhy::EndSlot (void)
 void
 MmWaveEnbPhy::StartSsBlockSlot()
 {
-//	std::cout << Simulator::Now ().GetMicroSeconds() << std::endl;
-	//Check if the current slot contains an SS block to transmit and the maximum number of transmissions in the SS Burst Set has not been exceeded
-	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)
-	{
-		m_beamManagement->BeamSweepStepTx();
-		m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
-	}
-	m_phyMacConfig->IncreaseCurrentSsSlotId();
+////	std::cout << Simulator::Now ().GetMicroSeconds() << std::endl;
+//	//Check if the current slot contains an SS block to transmit and the maximum number of transmissions in the SS Burst Set has not been exceeded
+//	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)
+//	{
+//		m_beamManagement->BeamSweepStepTx();
+//		m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
+//	}
+//	Time Period = m_beamManagement->GetNextSsBlockTransmissionTime(m_phyMacConfig,m_phyMacConfig->GetCurrentSsSlotId()); //m_currentSsBlockSlotId
+//	m_phyMacConfig->IncreaseCurrentSsSlotId();
+//
+//	// Schedule the next SS block transmission to update the beam id
+//	Time slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());  //FIXME: get period from beam pattern
+//	Simulator::Schedule (slotPeriod, &MmWaveEnbPhy::StartSsBlockSlot, this);
 
-	Time slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
-	Simulator::Schedule (slotPeriod, &MmWaveEnbPhy::StartSsBlockSlot, this);
+	// Change the beam
+	m_beamManagement->BeamSweepStepTx();
+	// Program next beam change
+	Time Period = m_beamManagement->GetNextSsBlockTransmissionTime(m_phyMacConfig,m_phyMacConfig->GetCurrentSsSlotId()); //m_currentSsBlockSlotId
+	Simulator::Schedule (Period, &MmWaveEnbPhy::StartSsBlockSlot, this);
+	// Increase beam counter
+	m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
+	if(m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate()==64)
+	{
+		m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
+	}
 }
 
 

@@ -88,11 +88,14 @@ public:
 
 	void AddEnbSinr (Ptr<NetDevice> enbNetDevice, uint16_t enbBeamId, uint16_t ueBeamId, SpectrumValue sinr);
 
+	BeamPairInfoStruct FindBestScannedBeamPair ();
 	BeamPairInfoStruct GetBestScannedBeamPair ();
 
 	void UpdateBestScannedEnb();
 
 	void ScheduleSsSlotSetStart(MmWavePhyMacCommon::SsBurstPeriods period);
+
+	Time GetNextSsBlockTransmissionTime (Ptr<MmWavePhyMacCommon> mmWaveCommon, uint16_t currentBeamId);
 
 private:
 

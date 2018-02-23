@@ -70,7 +70,7 @@ MmWaveBeamManagement::InitializeBeamSweepingTx(Time beamChangeTime)
 	m_beamSweepParams.m_currentBeamId = 0;
 //	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/TxCodebook.txt";
 	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook16h4v.txt";
-	MmWaveBeamforming bfchannel (64,8);
+
 	m_beamSweepParams.m_codebook = LoadCodebookFile(txFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
 	m_lastBeamSweepUpdate = Simulator::Now();
@@ -85,7 +85,7 @@ MmWaveBeamManagement::InitializeBeamSweepingRx(Time beamChangeTime)
 	m_beamSweepParams.m_currentBeamId = 0;
 //	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/RxCodebook.txt";
 	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook8h2v.txt";
-	MmWaveBeamforming bfchannel (64,8);
+
 	m_beamSweepParams.m_codebook = LoadCodebookFile(rxFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
 	NS_LOG_INFO ("InitializeBeamSweepingRx");
@@ -123,22 +123,22 @@ void MmWaveBeamManagement::BeamSweepStep()
 	uint16_t numCodes = m_beamSweepParams.m_codebook.size();
 //	NS_LOG_INFO ("[" << currentTime << "] Beam id " << m_beamSweepParams.m_currentBeamId << " of " << numCodes - 1);
 	m_beamSweepParams.m_currentBeamId = (m_beamSweepParams.m_currentBeamId + 1) % numCodes;
-	m_lastBeamSweepUpdate = currentTime;
+//	m_lastBeamSweepUpdate = currentTime;
 //	NS_LOG_INFO ("[" << currentTime << "] Beam id " << m_beamSweepParams.m_currentBeamId << " of " << numCodes - 1);
 
 }
 
 void MmWaveBeamManagement::BeamSweepStepTx()
 {
-	Time currentTime = Simulator::Now();
-	if (currentTime == 0 || currentTime >= m_lastBeamSweepUpdate + m_beamSweepParams.m_steerBeamInterval)
+//	Time currentTime = Simulator::Now();
+//	if (currentTime == 0 || currentTime >= m_lastBeamSweepUpdate + m_beamSweepParams.m_steerBeamInterval)
 	{
 		BeamSweepStep();
 	}
-	else
-	{
-		NS_LOG_INFO ("MmWaveBeamManagement::BeamSweepStepTx() This should not happen");
-	}
+//	else
+//	{
+//		NS_LOG_INFO ("MmWaveBeamManagement::BeamSweepStepTx() This should not happen");
+//	}
 }
 
 void MmWaveBeamManagement::BeamSweepStepRx()
@@ -213,7 +213,7 @@ MmWaveBeamManagement::AddEnbSinr (Ptr<NetDevice> enbNetDevice, uint16_t enbBeamI
 
 
 BeamPairInfoStruct
-MmWaveBeamManagement::GetBestScannedBeamPair ()
+MmWaveBeamManagement::FindBestScannedBeamPair ()
 {
 	BeamPairInfoStruct bestPairInfo;
 	double bestAvgSinr = -1.0;
@@ -226,7 +226,6 @@ MmWaveBeamManagement::GetBestScannedBeamPair ()
 				it2 != it1->second.end();
 				++it2)
 		{
-			//FIXME: This comparison does not work. Get the average SINR on the whole bandwidth on each case
 			int nbands = it2->second.GetSpectrumModel ()->GetNumBands ();
 			double avgSinr = Sum (it2->second)/nbands;
 			if (avgSinr > bestAvgSinr)
@@ -245,18 +244,21 @@ MmWaveBeamManagement::GetBestScannedBeamPair ()
 }
 
 
+BeamPairInfoStruct
+MmWaveBeamManagement::GetBestScannedBeamPair()
+{
+	return m_bestScannedEnb;
+}
+
+
 void MmWaveBeamManagement::UpdateBestScannedEnb()
 {
-	BeamPairInfoStruct bestScannedBeamPair = GetBestScannedBeamPair();
-//	if (bestScannedBeamPair.m_avgSinr > m_bestScannedEnb.m_avgSinr)
-	{
-		SetBestScannedEnb(bestScannedBeamPair);
-	}
+	BeamPairInfoStruct bestScannedBeamPair = FindBestScannedBeamPair();
+	SetBestScannedEnb(bestScannedBeamPair);
 	Time currentTime = Simulator::Now();
 	NS_LOG_INFO("[" << currentTime.GetSeconds() <<"]Best beam pair update: tx=" << bestScannedBeamPair.m_txBeamId <<
 			" rx=" << bestScannedBeamPair.m_rxBeamId <<
 			" avgSinr=" << bestScannedBeamPair.m_avgSinr);
-//	return bestScannedBeamPair;
 }
 
 
@@ -347,6 +349,34 @@ void MmWaveBeamManagement::SetBestScannedEnb(BeamPairInfoStruct bestEnbBeamInfo)
 	{
 		m_bestScannedEnb = bestEnbBeamInfo;
 	}
+}
+
+Time MmWaveBeamManagement::GetNextSsBlockTransmissionTime (Ptr<MmWavePhyMacCommon> mmWaveCommon, uint16_t currentBeamId)
+{
+	Time nextScheduledSsBlock;
+	//m_currentSsBlockSlotId
+	uint16_t beamPatternLength = mmWaveCommon->GetSsBlockPatternLength();
+	uint16_t currentSsBlockId = mmWaveCommon->GetCurrentSsSlotId();
+	uint16_t nextSsBlockId = currentSsBlockId + 1;
+	uint16_t currentOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(currentBeamId);
+	uint16_t nextOfdmSymbol;
+	Time now = Simulator::Now();
+	if(nextSsBlockId < beamPatternLength)
+	{
+		nextOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(currentBeamId + 1);
+		uint16_t numSymbols = nextOfdmSymbol-currentOfdmSymbol;
+		nextScheduledSsBlock = MicroSeconds(mmWaveCommon->GetSymbolPeriod()*numSymbols);
+	}
+	else
+	{
+		nextOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(0);
+		m_lastBeamSweepUpdate += MilliSeconds(mmWaveCommon->GetSsBurstSetPeriod());
+		Time t2 = MicroSeconds(mmWaveCommon->GetSymbolPeriod() * nextOfdmSymbol);
+		nextScheduledSsBlock = m_lastBeamSweepUpdate - now + t2;
+	}
+
+
+	return nextScheduledSsBlock;
 }
 
 }

@@ -45,11 +45,14 @@ namespace ns3 {
 
 // The slot indexes in which an SS burst block is allocated in
 static const std::vector<uint16_t> ssBurstSetPattern_scs60Khz = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
+//static const std::vector<uint16_t> ssBurstSetPattern_scs120Khz =
+//{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38};
 static const std::vector<uint16_t> ssBurstSetPattern_scs120Khz =
-{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38};
+{4, 8, 16, 20, 32, 36, 44, 48, 60, 64, 72, 76, 88, 92, 100, 104, 144, 148, 156, 160, 172, 176, 184, 188, 200, 204, 212, 216, 228, 232, 240, 244, 284, 288, 296, 300, 312, 316, 324, 328, 340, 344, 352, 356, 368, 372, 380, 384, 424, 428, 436, 440, 452, 456, 464, 468, 480, 484, 492, 496, 508, 512, 520, 524};
+//static const std::vector<uint16_t> ssBurstSetPattern_scs240Khz =
+//{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34};
 static const std::vector<uint16_t> ssBurstSetPattern_scs240Khz =
-{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34};
-
+{8, 12, 16, 20, 32, 36, 40, 44, 64, 68, 72, 76, 88, 92, 96, 100, 120, 124, 128, 132, 144, 148, 152, 156, 176, 180, 184, 188, 200, 204, 208, 212, 288, 292, 296, 300, 312, 316, 320, 324, 344, 348, 352, 356, 368, 372, 376, 380, 400, 404, 408, 412, 424, 428, 432, 436, 456, 460, 464, 468, 480, 484, 488, 492};
 static const std::vector<uint16_t> csiReportPeriodicity = {5,10,20,40,80,160,320};
 
 
@@ -154,8 +157,8 @@ struct DciInfoElementTdma
 
 	uint16_t 	m_rnti;
 	uint8_t		m_format;			// {DL assig. = 0, UL grant = 1}, only contiguous symbols supported
-	uint16_t		m_symStart;		// starting symbol index for flexible TTI scheme
-	uint16_t		m_numSym;			// number of symbols for flexible TTI scheme
+	uint16_t	m_symStart;		// starting symbol index for flexible TTI scheme
+	uint16_t	m_numSym;			// number of symbols for flexible TTI scheme
 	uint8_t		m_mcs;
 	uint32_t	m_tbSize;
 	uint8_t		m_ndi;
@@ -489,6 +492,12 @@ public:
 	GetDlCtrlSymbols (void)
 	{
 		return m_dlCtrlSymbols;
+	}
+
+	inline uint32_t
+	GetDlCtrlSymbols (uint16_t frameNum, uint8_t subframeNum)
+	{
+		return GetDlBlockSize(frameNum, subframeNum);
 	}
 
 	inline uint32_t
@@ -839,6 +848,8 @@ public:
 	// Carlos modification
 	enum SubCarrierSpacing
 	{
+		SCS15KHz = 15000,
+		SCS30KHz = 30000,
 		SCS60KHz = 60000,
 		SCS120KHz = 120000,
 		SCS240KHz = 240000,
@@ -866,7 +877,7 @@ public:
 	SetScs (SubCarrierSpacing scs, bool paternFlag);
 
 	void
-	SetSsBurstSetParams(SsBurstPeriods ssBurstSetPeriod, SsBurstPeriods ssBurstPeriod);
+	SetSsBurstSetPeriod(SsBurstPeriods ssBurstSetPeriod);
 
 	inline SsBurstPeriods
 	GetSsBurstSetPeriod ()
@@ -875,9 +886,9 @@ public:
 	}
 
 	inline SsBurstPeriods
-	GetSsBurstPeriod ()
+	GetSsBurstSetLength ()
 	{
-		return m_ssBurstPeriod;
+		return m_ssBurstSetLength;
 	}
 
 	bool
@@ -904,6 +915,7 @@ public:
 		return m_csiPeriodicReportPeriodicity;
 	}
 
+
 //	void
 //	setTxBeamId (uint16_t id)
 //	{
@@ -928,6 +940,15 @@ public:
 //	}
 	// End of Carlos modification
 
+	uint16_t GetSsBurstOfdmIndex(uint16_t beamId);
+
+	inline uint16_t
+	GetSsBlockPatternLength()
+	{
+		return m_ssBurstPattern.size();
+	}
+
+	uint32_t GetDlBlockSize(uint16_t frameNum, uint8_t subframeNum);
 
 private:
 	uint32_t m_symbolsPerSlot;
@@ -974,8 +995,8 @@ private:
 	uint16_t m_currentSsBlockSlotId;		// Current slot ID within a half frame (5 ms)
 	uint16_t m_maxSsBlockSlotId;			// Maximum number of slot ID, determined by the SCS: 5 times the number of slots per subframe
 	// The following 2 variables determine the SS Burst Set structure
-	SsBurstPeriods m_ssBurstPeriod;
-	SsBurstPeriods m_ssBurstSetPeriod;
+	SsBurstPeriods m_ssBurstSetLength;	// SS burst set duration (5 ms)
+	SsBurstPeriods m_ssBurstSetPeriod;	// SS burst set period
 
 };
 

@@ -672,14 +672,18 @@ MmWaveFlexTtiMacScheduler::DoSchedTriggerReq (const struct MmWaveMacSchedSapProv
 	              << " UL frame " << (unsigned)ulSfn.m_frameNum << " subframe " << (unsigned)ulSfn.m_sfNum);
 
 	// add slot for DL control
+	uint32_t numSym = m_phyMacConfig->GetDlBlockSize(frameNum,sfNum);
+	m_phyMacConfig->SetDlCtrlSymbols(numSym);	//The number of symbols is flexible and the PHY needs the right value
 	SlotAllocInfo dlCtrlSlot (0, SlotAllocInfo::DL, SlotAllocInfo::CTRL, SlotAllocInfo::DIGITAL, 0);
-	dlCtrlSlot.m_dci.m_numSym = 4;
+	dlCtrlSlot.m_dci.m_numSym = numSym; //4;
 	dlCtrlSlot.m_dci.m_symStart = 0;
 	ret.m_sfAllocInfo.m_slotAllocInfo.push_back (dlCtrlSlot);
-	int resvCtrl = m_phyMacConfig->GetDlCtrlSymbols() + m_phyMacConfig->GetUlCtrlSymbols();
+//	int resvCtrl = m_phyMacConfig->GetDlCtrlSymbols() + m_phyMacConfig->GetUlCtrlSymbols();
+	int resvCtrl = numSym + m_phyMacConfig->GetUlCtrlSymbols();
 	int symAvail = m_phyMacConfig->GetSymbolsPerSubframe() - resvCtrl;
 	uint8_t slotIdx = 1;
-	uint16_t symIdx = m_phyMacConfig->GetDlCtrlSymbols(); // symbols reserved for control at beginning of subframe
+//	uint16_t symIdx = m_phyMacConfig->GetDlCtrlSymbols(); // symbols reserved for control at beginning of subframe
+	uint16_t symIdx = numSym; // symbols reserved for control at beginning of subframe
 
 	// process received CQIs
 	RefreshDlCqiMaps ();

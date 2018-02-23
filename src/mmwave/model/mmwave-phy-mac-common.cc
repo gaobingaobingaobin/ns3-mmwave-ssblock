@@ -163,7 +163,7 @@ MmWavePhyMacCommon::MmWavePhyMacCommon ()
   m_symbolsPerSubframe (112),	// 24
   m_subframePeriod (1000.0),
   m_ctrlSymbols (1),
-  m_dlCtrlSymbols (28),	// 4 OFDM symbols for SS block. Former value was 1
+  m_dlCtrlSymbols (64),	// 4 OFDM symbols for SS block. Former value was 1
   m_ulCtrlSymbols (1),
   m_slotsPerSubframe (8),
   m_subframesPerFrame (10),
@@ -190,7 +190,8 @@ MmWavePhyMacCommon::MmWavePhyMacCommon ()
 	m_csiPeriodicReportPeriodicity(5),
 	m_ssBurstPattern (),
 	m_currentSsBlockSlotId (0),
-	m_maxSsBlockSlotId (4*5)
+	m_maxSsBlockSlotId (4*5),
+	m_ssBurstSetLength (ms5)
 
 
 {
@@ -205,6 +206,16 @@ void MmWavePhyMacCommon::SetScs (SubCarrierSpacing scs, bool paternFlag)
 	// The configurations below are assuming slots with 14 OFDM symbols
 	switch(scs)
 	{
+	case SCS15KHz:
+		m_symbolPeriod = 66.67;
+		m_slotsPerSubframe = 1;
+		m_slotPeriod = 1;
+		break;
+	case SCS30KHz:
+		m_symbolPeriod = 33.34;
+		m_slotsPerSubframe = 2;
+		m_slotPeriod = 500;
+		break;
 	case SCS60KHz:
 		m_symbolPeriod = 16.67;
 		m_slotsPerSubframe = 4;
@@ -243,18 +254,15 @@ void MmWavePhyMacCommon::SetScs (SubCarrierSpacing scs, bool paternFlag)
 
 
 void
-MmWavePhyMacCommon::SetSsBurstSetParams(SsBurstPeriods ssBurstSetPeriod, SsBurstPeriods ssBurstPeriod)
+MmWavePhyMacCommon::SetSsBurstSetPeriod(SsBurstPeriods ssBurstSetPeriod)
 {
 
-	if(ssBurstPeriod > ssBurstSetPeriod)
-	{
-		NS_LOG_ERROR("ssBurstPeriod cannot be larger than ssBurstSetPeriod. Check the code.");
-	}
-	m_ssBurstPeriod = ssBurstPeriod;
+	m_ssBurstSetLength = ms5; //ssBurstSetLength;
 	m_ssBurstSetPeriod = ssBurstSetPeriod;
-	m_maxSsBlockSlotId =  m_slotsPerSubframe * ssBurstPeriod;
 
+	m_maxSsBlockSlotId =  m_ssBurstPattern.size();  //Now the number of SS blocks per half-frame is the pattern length. FIXME: Consider moving this line out of the function, it no longer depends on the SS bursts values
 }
+
 
 bool MmWavePhyMacCommon::GetSsBlockSlotStatus ()
 {
@@ -288,6 +296,44 @@ bool MmWavePhyMacCommon::CheckSsBlockSlotStatus (uint16_t slotId)
 	NS_LOG_INFO ("Beam id " << slotId << " is not included in the pattern");
 	return false;
 }
+
+
+uint16_t MmWavePhyMacCommon::GetSsBurstOfdmIndex(uint16_t beamId)
+{
+	if (m_ssBurstPattern.size() == 0)
+	{
+		NS_LOG_ERROR("SCS beam pattern is not initialized!");
+	}
+	return m_ssBurstPattern.at(beamId);
+}
+
+
+uint32_t
+MmWavePhyMacCommon::GetDlBlockSize(uint16_t frameNum, uint8_t subframeNum)
+{
+
+	uint16_t frameSubFrameNum = 10 * frameNum + subframeNum; // Get the sub-frame millisecond
+	uint16_t numRbs = 1; // Minimum size when no SS block is to be transmitted in the sf
+	uint16_t index = frameSubFrameNum % m_ssBurstSetPeriod;
+	// index values from 0 to 4 the current sub-frame transmits SS blocks
+	if (index < 5)
+	{
+	    uint16_t numSymbolsPerSf= (uint16_t)m_symbolsPerSubframe;
+	    uint16_t min=index*numSymbolsPerSf;
+	    uint16_t max=(index+1)*numSymbolsPerSf -1;
+	    numRbs = 0;
+		for (std::vector<uint16_t>::iterator it = m_ssBurstPattern.begin();
+				it != m_ssBurstPattern.end(); it++)
+	    {
+	        if (*it >= min && *it < max)
+	        {
+	            numRbs += 4;
+	        }
+	    }
+	}
+	return numRbs;
+}
+
 
 }
 

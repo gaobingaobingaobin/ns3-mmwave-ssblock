@@ -97,12 +97,12 @@ private:
 		uint8_t		m_ulMcs;
 		uint32_t	m_maxDlBufSize;
 		uint32_t	m_maxUlBufSize;
-		uint8_t		m_maxDlSymbols;
-		uint8_t		m_maxUlSymbols;
-		uint8_t		m_dlSymbols;
-		uint8_t		m_ulSymbols;
-		uint8_t		m_dlSymbolsRetx;
-		uint8_t		m_ulSymbolsRetx;
+		uint16_t	m_maxDlSymbols;
+		uint16_t	m_maxUlSymbols;
+		uint16_t	m_dlSymbols;
+		uint16_t	m_ulSymbols;
+		uint16_t	m_dlSymbolsRetx;
+		uint16_t	m_ulSymbolsRetx;
 		uint32_t	m_dlTbSize;
 		uint32_t	m_ulTbSize;
 		std::vector <struct RlcPduInfo> m_rlcPduInfo;

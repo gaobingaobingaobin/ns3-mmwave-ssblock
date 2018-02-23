@@ -171,7 +171,6 @@ private:
 	Ptr<MmWavePhyMacCommon> m_phyMacCommon;
 	Architecture m_uePhyArch;
 	Architecture m_enbPhyArch;
-	MmWavePhyMacCommon::SsBurstPeriods m_ssBurstPeriod;
 	MmWavePhyMacCommon::SsBurstPeriods m_ssBurstSetPeriod;
 
 	ObjectFactory m_ffrAlgorithmFactory;

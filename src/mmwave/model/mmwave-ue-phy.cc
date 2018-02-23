@@ -117,7 +117,7 @@ void
 MmWaveUePhy::DoInitialize (void)
 {
 	NS_LOG_FUNCTION (this);
-	m_dlCtrlPeriod = NanoSeconds (1000 * m_phyMacConfig->GetDlCtrlSymbols() * m_phyMacConfig->GetSymbolPeriod());
+	m_dlCtrlPeriod = NanoSeconds (1000 * m_phyMacConfig->GetDlCtrlSymbols(m_frameNum, m_sfNum) * m_phyMacConfig->GetSymbolPeriod());
 	m_ulCtrlPeriod = NanoSeconds (1000 * m_phyMacConfig->GetUlCtrlSymbols() * m_phyMacConfig->GetSymbolPeriod());
 
 	for (unsigned i = 0; i < m_phyMacConfig->GetSubframesPerFrame(); i++)
@@ -542,7 +542,8 @@ MmWaveUePhy::StartSlot ()
 
 	if (m_slotNum == 0)  // reserved DL control
 	{
-		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * m_phyMacConfig->GetDlCtrlSymbols ());
+		uint32_t DlCtrlSymbols = m_phyMacConfig->GetDlCtrlSymbols (m_frameNum, m_sfNum);
+		slotPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSymbolPeriod () * DlCtrlSymbols);
 		NS_LOG_DEBUG ("UE" << m_rnti << " RXing DL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
 		              << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
 				              "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod));
@@ -704,7 +705,10 @@ void
 MmWaveUePhy::StartSsBlockSlot()
 {
 	// Do the beam management: increase ss block beam id to select the next beam to transmit the ss block
-	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)	//Check if the current slot contains a SS block to transmit
+//	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)	//Check if the current slot contains a SS block to transmit
+	uint16_t numTxBeamsBeforeRxBeamUpdate = m_phyMacConfig->GetSsBlockPatternLength();  //SS block pattern vector length
+	uint16_t numTxBeamsOnCurrentRxBeam = m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate();
+	if (numTxBeamsOnCurrentRxBeam < numTxBeamsBeforeRxBeamUpdate)	//Check if the current slot contains a SS block to transmit
 	{
 		Architecture phyArch = GetPhyArchitecture();
 
@@ -722,17 +726,19 @@ MmWaveUePhy::StartSsBlockSlot()
 			if (m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate() == 64) // FIXME: TX codebook length is 64
 			{
 				m_beamManagement->BeamSweepStepRx();
-				// Reset counter: this is now scheduled every SS burst set period. See MmWaveUePhy::DoInitialize()
+//				// Reset counter: this is now scheduled every SS burst set period. See MmWaveUePhy::DoInitialize()
 //				m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
 				// If ss slot id is zero for the first time get the best serving enb and pair of beams
 				// This means that all beams have been measured and the UE selects the best one
 
-				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
-				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
+				if(m_beamManagement->GetCurrentBeamId() == 0)
+//				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
+//				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
 				{
+					m_beamManagement->UpdateBestScannedEnb();
+					BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
 					m_bestTxBeamId = bestBeams.m_txBeamId;
 					m_bestRxBeamId = bestBeams.m_rxBeamId;
-					m_beamManagement->UpdateBestScannedEnb();
 					UpdateChannelMap();
 					if (GetCurrentState() == CELL_SEARCH)
 					{
@@ -797,26 +803,33 @@ MmWaveUePhy::StartSsBlockSlot()
 			if (txBeamId == 64)	//FIXME: Implement a method to obtain the codebook length
 			{
 
-				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
-				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
+//				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
+//				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
 				{
+					m_beamManagement->UpdateBestScannedEnb();
+					UpdateChannelMap();
+
+					BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
 					m_bestTxBeamId = bestBeams.m_txBeamId;
 					m_bestRxBeamId = bestBeams.m_rxBeamId;
 
-					
-					m_beamManagement->UpdateBestScannedEnb();
-					UpdateChannelMap();
 					if (GetCurrentState() == CELL_SEARCH)
 					{
 						//Attach to eNB and change state to SYNCRONIZED
 	//					uint16_t cellId = m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice->GetObject<MmWaveEnbNetDevice> ()->GetCellId ();
 	//					RegisterToEnb (cellId, m_phyMacConfig);
+						AttachToSelectedEnb(m_netDevice,bestBeams.m_targetNetDevice);
 						SetCurrentState(SYNCHRONIZED);	// This is called in RegisterToEnb method
 					}
 					else
 					{
+						Ptr<MmWaveEnbNetDevice> enb =
+								DynamicCast<MmWaveEnbNetDevice>(m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice);
+//						Simulator::Schedule (NanoSeconds(1), &MmWaveSpectrumPhy::UpdateSinrPerceived,
+//								(enb->GetPhy()->GetDlSpectrumPhy(),m_beamManagement->GetBestScannedBeamPair().m_sinrPsd));
+						enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
+						GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
 						//TODO: Attach to the eNB if it is a different one
-						SetCurrentState(SYNCHRONIZED);
 					}
 					// Reset counter: this is now scheduled every SS burst set period. See MmWaveUePhy::DoInitialize()
 	//				m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
@@ -830,11 +843,15 @@ MmWaveUePhy::StartSsBlockSlot()
 
 	}
 
+
+	// Schedule reception of the next SS block transmission
+//	Time slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
+//	Simulator::Schedule (slotPeriod, &MmWaveUePhy::StartSsBlockSlot, this);
+	Time Period = m_beamManagement->GetNextSsBlockTransmissionTime(m_phyMacConfig,m_phyMacConfig->GetCurrentSsSlotId()); //m_currentSsBlockSlotId
+	Simulator::Schedule (Period, &MmWaveUePhy::StartSsBlockSlot, this);
+
 	// Get the next slot ID for the SS Block slot condition determination
 	m_phyMacConfig->IncreaseCurrentSsSlotId();
-
-	Time slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
-	Simulator::Schedule (slotPeriod, &MmWaveUePhy::StartSsBlockSlot, this);
 }
 
 

@@ -143,7 +143,7 @@ MmWaveHelper::DoInitialize()
 	// Carlos modification
 	MmWavePhyMacCommon::SubCarrierSpacing scs = MmWavePhyMacCommon::SCS120KHz;
 	m_phyMacCommon->SetScs(scs, true);
-	m_phyMacCommon->SetSsBurstSetParams(m_ssBurstSetPeriod,m_ssBurstPeriod);
+	m_phyMacCommon->SetSsBurstSetPeriod(m_ssBurstSetPeriod);
 	// End of Carlos modification
 
 	if (!m_pathlossModelType.empty ())
@@ -1036,10 +1036,6 @@ MmWaveHelper::SetUePhyArchitecture (Architecture arch)
 	m_uePhyArch = arch;
 }
 
-void MmWaveHelper::SetSsBurstPeriod (MmWavePhyMacCommon::SsBurstPeriods period)
-{
-	m_ssBurstPeriod = period;
-}
 
 void MmWaveHelper::SetSsBurstSetPeriod (MmWavePhyMacCommon::SsBurstPeriods period)
 {
