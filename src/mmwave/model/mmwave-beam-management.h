@@ -95,7 +95,7 @@ public:
 
 	void ScheduleSsSlotSetStart(MmWavePhyMacCommon::SsBurstPeriods period);
 
-	Time GetNextSsBlockTransmissionTime (Ptr<MmWavePhyMacCommon> mmWaveCommon, uint16_t currentBeamId);
+	Time GetNextSsBlockTransmissionTime (Ptr<MmWavePhyMacCommon> mmWaveCommon, uint16_t currentSsBlock);
 
 private:
 

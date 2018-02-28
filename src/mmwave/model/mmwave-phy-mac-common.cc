@@ -298,13 +298,13 @@ bool MmWavePhyMacCommon::CheckSsBlockSlotStatus (uint16_t slotId)
 }
 
 
-uint16_t MmWavePhyMacCommon::GetSsBurstOfdmIndex(uint16_t beamId)
+uint16_t MmWavePhyMacCommon::GetSsBurstOfdmIndex(uint16_t index)
 {
 	if (m_ssBurstPattern.size() == 0)
 	{
 		NS_LOG_ERROR("SCS beam pattern is not initialized!");
 	}
-	return m_ssBurstPattern.at(beamId);
+	return m_ssBurstPattern.at(index);
 }
 
 

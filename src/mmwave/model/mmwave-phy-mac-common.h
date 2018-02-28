@@ -940,7 +940,7 @@ public:
 //	}
 	// End of Carlos modification
 
-	uint16_t GetSsBurstOfdmIndex(uint16_t beamId);
+	uint16_t GetSsBurstOfdmIndex(uint16_t index);
 
 	inline uint16_t
 	GetSsBlockPatternLength()

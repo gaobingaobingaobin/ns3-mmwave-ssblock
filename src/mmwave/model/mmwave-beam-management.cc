@@ -351,19 +351,18 @@ void MmWaveBeamManagement::SetBestScannedEnb(BeamPairInfoStruct bestEnbBeamInfo)
 	}
 }
 
-Time MmWaveBeamManagement::GetNextSsBlockTransmissionTime (Ptr<MmWavePhyMacCommon> mmWaveCommon, uint16_t currentBeamId)
+Time MmWaveBeamManagement::GetNextSsBlockTransmissionTime (Ptr<MmWavePhyMacCommon> mmWaveCommon, uint16_t currentSsBlock)
 {
 	Time nextScheduledSsBlock;
 	//m_currentSsBlockSlotId
 	uint16_t beamPatternLength = mmWaveCommon->GetSsBlockPatternLength();
-	uint16_t currentSsBlockId = mmWaveCommon->GetCurrentSsSlotId();
-	uint16_t nextSsBlockId = currentSsBlockId + 1;
-	uint16_t currentOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(currentBeamId);
+	uint16_t nextSsBlockId = currentSsBlock + 1;
+	uint16_t currentOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(currentSsBlock);
 	uint16_t nextOfdmSymbol;
 	Time now = Simulator::Now();
 	if(nextSsBlockId < beamPatternLength)
 	{
-		nextOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(currentBeamId + 1);
+		nextOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(nextSsBlockId);
 		uint16_t numSymbols = nextOfdmSymbol-currentOfdmSymbol;
 		nextScheduledSsBlock = MicroSeconds(mmWaveCommon->GetSymbolPeriod()*numSymbols);
 	}
@@ -371,7 +370,7 @@ Time MmWaveBeamManagement::GetNextSsBlockTransmissionTime (Ptr<MmWavePhyMacCommo
 	{
 		nextOfdmSymbol = mmWaveCommon->GetSsBurstOfdmIndex(0);
 		m_lastBeamSweepUpdate += MilliSeconds(mmWaveCommon->GetSsBurstSetPeriod());
-		Time t2 = MicroSeconds(mmWaveCommon->GetSymbolPeriod() * nextOfdmSymbol);
+		Time t2 = NanoSeconds(1000.0 * mmWaveCommon->GetSymbolPeriod() * nextOfdmSymbol);
 		nextScheduledSsBlock = m_lastBeamSweepUpdate - now + t2;
 	}
 

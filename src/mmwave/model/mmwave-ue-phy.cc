@@ -159,12 +159,11 @@ MmWaveUePhy::DoInitialize (void)
 	m_sfPeriod = NanoSeconds (1000.0 * m_phyMacConfig->GetSubframePeriod ());
 
 	// Carlos modification
-	uint16_t txCodebookLength = 64; //FIXME: Do not hardcode the number of codebooks in the tx
-	double beamUpdatePeriod = m_phyMacConfig->GetSlotPeriod() * txCodebookLength;
-	Time beamUpdatePeriodTime = NanoSeconds(1000*beamUpdatePeriod);
+	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
+	double beamUpdatePeriod = ssBurstSetperiod;
+	Time beamUpdatePeriodTime = MicroSeconds(1000*beamUpdatePeriod);
 	m_beamManagement = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement->InitializeBeamSweepingRx(beamUpdatePeriodTime);
-	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
 	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
 	StartSsBlockSlot();
 	// End of Carlos modification
@@ -706,9 +705,9 @@ MmWaveUePhy::StartSsBlockSlot()
 {
 	// Do the beam management: increase ss block beam id to select the next beam to transmit the ss block
 //	if (m_phyMacConfig->GetSsBlockSlotStatus() && m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() < 64)	//Check if the current slot contains a SS block to transmit
-	uint16_t numTxBeamsBeforeRxBeamUpdate = m_phyMacConfig->GetSsBlockPatternLength();  //SS block pattern vector length
-	uint16_t numTxBeamsOnCurrentRxBeam = m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate();
-	if (numTxBeamsOnCurrentRxBeam < numTxBeamsBeforeRxBeamUpdate)	//Check if the current slot contains a SS block to transmit
+//	uint16_t numTxBeamsBeforeRxBeamUpdate = m_phyMacConfig->GetSsBlockPatternLength();  //SS block pattern vector length
+//	uint16_t numTxBeamsOnCurrentRxBeam = m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate();
+//	if (numTxBeamsOnCurrentRxBeam < numTxBeamsBeforeRxBeamUpdate)	//Check if the current slot contains a SS block to transmit
 	{
 		Architecture phyArch = GetPhyArchitecture();
 
@@ -723,7 +722,7 @@ MmWaveUePhy::StartSsBlockSlot()
 			GetBeamGain();
 
 			// Call to update beam sweeping beam id if it is time to do so
-			if (m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate() == 64) // FIXME: TX codebook length is 64
+			if (m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() == m_phyMacConfig->GetSsBlockPatternLength()-1) // FIXME: TX codebook length is 64
 			{
 				m_beamManagement->BeamSweepStepRx();
 //				// Reset counter: this is now scheduled every SS burst set period. See MmWaveUePhy::DoInitialize()
@@ -731,53 +730,60 @@ MmWaveUePhy::StartSsBlockSlot()
 				// If ss slot id is zero for the first time get the best serving enb and pair of beams
 				// This means that all beams have been measured and the UE selects the best one
 
-				m_beamManagement->UpdateBestScannedEnb();
-				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
-				if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
+				if(m_beamManagement->GetCurrentBeamId() == 0)	//If id is zero the beam sweep has been completed
 				{
-					m_bestTxBeamId = bestBeams.m_txBeamId;
-					m_bestRxBeamId = bestBeams.m_rxBeamId;
-					UpdateChannelMap();
-					if (GetCurrentState() == CELL_SEARCH)
+					m_beamManagement->UpdateBestScannedEnb();
+					BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
+					if(bestBeams.m_txBeamId != m_bestTxBeamId || bestBeams.m_rxBeamId != m_bestRxBeamId)
 					{
-						//Attach to eNB and change state to SYNCRONIZED
-						BeamPairInfoStruct bestBeamInfo = m_beamManagement->GetBestScannedBeamPair();
-//						uint16_t cellId = bestBeamInfo.m_targetNetDevice->GetObject<MmWaveEnbNetDevice> ()->GetCellId ();
-						//FIXME:
-//						std::cout << "Current time = "<< Simulator::Now() << std::endl;
-						Time updateTime =Simulator::Now()+MicroSeconds(bestBeamInfo.m_txBeamId * m_phyMacConfig->GetSlotPeriod());
-//						Simulator::Schedule(MicroSeconds(bestBeamInfo.m_txBeamId * m_phyMacConfig->GetSlotPeriod())
-//								,&MmWaveUePhy::RegisterToEnb,this,cellId,m_phyMacConfig);
-						Simulator::Schedule(updateTime,&MmWaveUePhy::AttachToSelectedEnb,this,m_netDevice,bestBeamInfo.m_targetNetDevice);
+						m_bestTxBeamId = bestBeams.m_txBeamId;
+						m_bestRxBeamId = bestBeams.m_rxBeamId;
+						UpdateChannelMap();
+						if (GetCurrentState() == CELL_SEARCH)
+						{
+							//Attach to eNB and change state to SYNCRONIZED
+							BeamPairInfoStruct bestBeamInfo = m_beamManagement->GetBestScannedBeamPair();
+	//						uint16_t cellId = bestBeamInfo.m_targetNetDevice->GetObject<MmWaveEnbNetDevice> ()->GetCellId ();
+							//FIXME:
+	//						std::cout << "Current time = "<< Simulator::Now() << std::endl;
+							Time updateTime =Simulator::Now()+MicroSeconds(bestBeamInfo.m_txBeamId * m_phyMacConfig->GetSlotPeriod());
+	//						Simulator::Schedule(MicroSeconds(bestBeamInfo.m_txBeamId * m_phyMacConfig->GetSlotPeriod())
+	//								,&MmWaveUePhy::RegisterToEnb,this,cellId,m_phyMacConfig);
+							Simulator::Schedule(updateTime,&MmWaveUePhy::AttachToSelectedEnb,this,m_netDevice,bestBeamInfo.m_targetNetDevice);
 
-//						AttachToSelectedEnb
+	//						AttachToSelectedEnb
+						}
+						else
+						{
+							//TODO: Attach to the eNB if it is a different one
+	//						Simulator::Schedule (MicroSeconds(3*100), &MmWaveSpectrumPhy::UpdateSinrPerceived,
+	//																	 enbDev->GetPhy()->GetDlSpectrumPhy (), specVals);
+							Ptr<MmWaveEnbNetDevice> enb =
+									DynamicCast<MmWaveEnbNetDevice>(m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice);
+	//						Simulator::Schedule (NanoSeconds(1), &MmWaveSpectrumPhy::UpdateSinrPerceived,
+	//								(enb->GetPhy()->GetDlSpectrumPhy(),m_beamManagement->GetBestScannedBeamPair().m_sinrPsd));
+							enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
+							GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
+	//						SetCurrentState(SYNCHRONIZED);
+						}
 					}
-					else
-					{
-						//TODO: Attach to the eNB if it is a different one
-//						Simulator::Schedule (MicroSeconds(3*100), &MmWaveSpectrumPhy::UpdateSinrPerceived,
-//																	 enbDev->GetPhy()->GetDlSpectrumPhy (), specVals);
-						Ptr<MmWaveEnbNetDevice> enb =
-								DynamicCast<MmWaveEnbNetDevice>(m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice);
-//						Simulator::Schedule (NanoSeconds(1), &MmWaveSpectrumPhy::UpdateSinrPerceived,
-//								(enb->GetPhy()->GetDlSpectrumPhy(),m_beamManagement->GetBestScannedBeamPair().m_sinrPsd));
-						enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
-						GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
-//						SetCurrentState(SYNCHRONIZED);
-					}
+
+	//				// Uplink
+	//				if(GetCurrentState() == SYNCHRONIZED)
+	//				{
+	//					SetSubChannelsForTransmission (m_channelChunks);
+	//					std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
+	//					NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
+	//								  << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
+	//									  "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod-NanoSeconds(1.0)));
+	//					SendCtrlChannels (ctrlMsg, slotPeriod-NanoSeconds(1.0));
+	//				}
 				}
 
-//				// Uplink
-//				if(GetCurrentState() == SYNCHRONIZED)
-//				{
-//					SetSubChannelsForTransmission (m_channelChunks);
-//					std::list<Ptr<MmWaveControlMessage> > ctrlMsg = GetControlMessages ();
-//					NS_LOG_DEBUG ("UE" << m_rnti << " TXing UL CTRL frame " << m_frameNum << " subframe " << (unsigned)m_sfNum << " symbols "
-//								  << (unsigned)currSlot.m_dci.m_symStart << "-" << (unsigned)(currSlot.m_dci.m_symStart+currSlot.m_dci.m_numSym-1) <<
-//									  "\t start " << Simulator::Now() << " end " << (Simulator::Now()+slotPeriod-NanoSeconds(1.0)));
-//					SendCtrlChannels (ctrlMsg, slotPeriod-NanoSeconds(1.0));
-//				}
-
+			}
+			else if(m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() > 64)
+			{
+				std::cout << "Current SS block: " << m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() << std::endl;
 			}
 			break;
 
@@ -797,8 +803,8 @@ MmWaveUePhy::StartSsBlockSlot()
 				// next iteration
 				rxBeamId++;
 			}
-			uint16_t txBeamId = m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
-			if (txBeamId == 64)	//FIXME: Implement a method to obtain the codebook length
+			uint16_t txBeamId = m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate();
+			if (txBeamId == m_phyMacConfig->GetSsBlockPatternLength()-1)	//FIXME: Implement a method to obtain the codebook length
 			{
 				m_beamManagement->UpdateBestScannedEnb();
 				BeamPairInfoStruct bestBeams = m_beamManagement->GetBestScannedBeamPair();
@@ -844,11 +850,16 @@ MmWaveUePhy::StartSsBlockSlot()
 	// Schedule reception of the next SS block transmission
 //	Time slotPeriod = NanoSeconds (1000.0*m_phyMacConfig->GetSlotPeriod());
 //	Simulator::Schedule (slotPeriod, &MmWaveUePhy::StartSsBlockSlot, this);
-	Time Period = m_beamManagement->GetNextSsBlockTransmissionTime(m_phyMacConfig,m_phyMacConfig->GetCurrentSsSlotId()); //m_currentSsBlockSlotId
+	Time Period = m_beamManagement->GetNextSsBlockTransmissionTime(m_phyMacConfig,m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate()); //m_currentSsBlockSlotId
+	m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
+//	if(m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate() >= m_phyMacConfig->GetSsBlockPatternLength())
+//	{
+//		std::cout << m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate() << std::endl;
+//	}
 	Simulator::Schedule (Period, &MmWaveUePhy::StartSsBlockSlot, this);
 
-	// Get the next slot ID for the SS Block slot condition determination
-	m_phyMacConfig->IncreaseCurrentSsSlotId();
+//	// Get the next slot ID for the SS Block slot condition determination
+//	m_phyMacConfig->IncreaseCurrentSsSlotId();
 }
 
 

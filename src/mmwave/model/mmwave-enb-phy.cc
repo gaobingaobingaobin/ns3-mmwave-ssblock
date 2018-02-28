@@ -182,8 +182,8 @@ MmWaveEnbPhy::DoInitialize (void)
 //	Ptr<MmWaveBeamManagement> mng = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement = CreateObject<MmWaveBeamManagement>();
 	m_beamManagement->InitializeBeamSweepingTx(beamPeriodicityTime);
-//	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
-//	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
+	MmWavePhyMacCommon::SsBurstPeriods ssBurstSetperiod = m_phyMacConfig->GetSsBurstSetPeriod();
+	m_beamManagement->ScheduleSsSlotSetStart(ssBurstSetperiod);
 	StartSsBlockSlot();
 	// End of Carlos modification
 
@@ -568,14 +568,16 @@ MmWaveEnbPhy::StartSsBlockSlot()
 	// Change the beam
 	m_beamManagement->BeamSweepStepTx();
 	// Program next beam change
-	Time Period = m_beamManagement->GetNextSsBlockTransmissionTime(m_phyMacConfig,m_phyMacConfig->GetCurrentSsSlotId()); //m_currentSsBlockSlotId
+	Time Period = m_beamManagement->GetNextSsBlockTransmissionTime(m_phyMacConfig,m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate()); //m_currentSsBlockSlotId
 	Simulator::Schedule (Period, &MmWaveEnbPhy::StartSsBlockSlot, this);
 	// Increase beam counter
 	m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
-	if(m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate()==64)
-	{
-		m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
-	}
+//	uint16_t ssBlocksCount = m_beamManagement->IncreaseNumBlocksSinceLastBeamSweepUpdate();
+//	std::cout << ssBlocksCount << std::endl;
+//	if(ssBlocksCount==64)
+//	{
+////		m_beamManagement->ResetNumBlocksSinceLastBeamSweepUpdate();
+//	}
 }
 
 
