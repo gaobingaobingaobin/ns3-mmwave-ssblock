@@ -427,21 +427,64 @@ main (int argc, char *argv[])
 	// Be careful not to locate the UE inside the building
 	if (los_profile > 0)
 	{
-		Ptr < Building > building1;
-		building1 = Create<Building> ();
-//		building1->SetBoundaries (Box (-15,-12.0,
-//									-14, -12.0,
-//									0.0, 20));
-		building1->SetBoundaries (Box (-100,100.0,
-								10, 20.0,
-								0.0, 40));
-	}
 
-//	Ptr < Building > building1;
-//	building1 = Create<Building> ();
-//	building1->SetBoundaries (Box (-100,100.0,
-//								10, 20.0,
-//								0.0, 40));
+		if(speed < 5 )
+		{
+
+			Ptr < Building > building1;
+			building1 = Create<Building> ();
+			building1->SetBoundaries (Box (-78,-77.0,
+										-49.8, -49.9,
+										0.0, 40));
+
+			Ptr < Building > building2;
+			building2 = Create<Building> ();
+			building2->SetBoundaries (Box (-76.5,-76.0,
+										-49.8, -49.9,
+										0.0, 40));
+
+			Ptr < Building > building3;
+			building3 = Create<Building> ();
+			building3->SetBoundaries (Box (-74,-73.5,
+										-49.8, -49.9,
+										0.0, 40));
+
+			Ptr < Building > building4;
+			building4 = Create<Building> ();
+			building4->SetBoundaries (Box (-72.5,-71.5,
+										-49.8, -49.9,
+										0.0, 40));
+
+		}
+		else
+		{
+
+			Ptr < Building > building1;
+			building1 = Create<Building> ();
+			building1->SetBoundaries (Box (-50,-35.0,
+										-49, -49.5,
+										0.0, 40));
+
+			Ptr < Building > building2;
+			building2 = Create<Building> ();
+			building2->SetBoundaries (Box (-27,-20.0,
+										-49, -49.5,
+										0.0, 40));
+
+			Ptr < Building > building3;
+			building3 = Create<Building> ();
+			building3->SetBoundaries (Box (10,17.0,
+										-49, -49.5,
+										0.0, 40));
+
+			Ptr < Building > building4;
+			building4 = Create<Building> ();
+			building4->SetBoundaries (Box (32,47.0,
+										-49, -49.5,
+										0.0, 40));
+		}
+
+	}
 
 
 
@@ -463,7 +506,7 @@ main (int argc, char *argv[])
 
 	MobilityHelper uemobility;
   Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
-  uePositionAlloc->Add (Vector (-180.0, -50.0, hUT));
+  uePositionAlloc->Add (Vector (-80.0, -50.0, hUT));
 
 
 //  uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
