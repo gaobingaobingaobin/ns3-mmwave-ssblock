@@ -56,6 +56,7 @@ class MmWaveControlMessage;
 enum Architecture
 {
 	Analog = 0,
+	Analog_fast,
 	Digital,
 	Hybrid
 };

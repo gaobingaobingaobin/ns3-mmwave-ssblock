@@ -241,6 +241,11 @@ main (int argc, char *argv[])
 		arch = Analog;
 //		std::cout << "Analog architecture" << std::endl;
 	}
+	else if (sArch == "Analog_fast")
+	{
+		arch = Analog_fast;
+//		std::cout << "Analog architecture with faster beam updates" << std::endl;
+	}
 	else if (sArch == "Digital")
 	{
 		arch = Digital;
