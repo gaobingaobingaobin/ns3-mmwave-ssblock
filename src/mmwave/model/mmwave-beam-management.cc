@@ -69,8 +69,7 @@ MmWaveBeamManagement::InitializeBeamSweepingTx(Time beamChangeTime)
 	m_beamSweepParams.m_currentBeamId = 0;
 
 //	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/TxCodebook.txt";
-//	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook16h4v.txt";
-	std::string txFilePath = "../InputFiles/KronCodebook16h4v.txt";
+	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook16h4v.txt";
 
 	m_beamSweepParams.m_codebook = LoadCodebookFile(txFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
