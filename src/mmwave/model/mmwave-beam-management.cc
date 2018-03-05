@@ -85,8 +85,7 @@ MmWaveBeamManagement::InitializeBeamSweepingRx(Time beamChangeTime)
 	m_beamSweepParams.m_currentBeamId = 0;
 
 //	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/RxCodebook.txt";
-//	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook8h2v.txt";
-	std::string rxFilePath = "../InputFiles/KronCodebook8h2v.txt";
+	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook8h2v.txt";
 
 	m_beamSweepParams.m_codebook = LoadCodebookFile(rxFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
