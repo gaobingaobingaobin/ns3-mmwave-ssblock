@@ -21,7 +21,6 @@
 #include <ns3/double.h>
 #include <ns3/boolean.h>
 #include "mmwave-spectrum-value-helper.h"
-#include <unistd.h>
 
 namespace ns3{
 
@@ -68,11 +67,10 @@ void
 MmWaveBeamManagement::InitializeBeamSweepingTx(Time beamChangeTime)
 {
 	m_beamSweepParams.m_currentBeamId = 0;
-	char cwd[1000];
-	getcwd(cwd,1000);
-	std::string txFilePath(cwd);
-//	txFilePath += "/src/mmwave/model/BeamFormingMatrix/TxCodebook.txt";
-	txFilePath += "/src/mmwave/model/BeamFormingMatrix/KronCodebook16h4v.txt";
+
+//	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/TxCodebook.txt";
+//	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook16h4v.txt";
+	std::string txFilePath = "../InputFiles/KronCodebook16h4v.txt";
 
 	m_beamSweepParams.m_codebook = LoadCodebookFile(txFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
@@ -86,11 +84,10 @@ void
 MmWaveBeamManagement::InitializeBeamSweepingRx(Time beamChangeTime)
 {
 	m_beamSweepParams.m_currentBeamId = 0;
-	char cwd[1000];
-	getcwd(cwd,1000);
-	std::string rxFilePath(cwd);
-//	rxFilePath += "/src/mmwave/model/BeamFormingMatrix/RxCodebook.txt";
-	rxFilePath += "/src/mmwave/model/BeamFormingMatrix/KronCodebook8h2v.txt";
+
+//	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/RxCodebook.txt";
+//	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook8h2v.txt";
+	std::string rxFilePath = "../InputFiles/KronCodebook8h2v.txt";
 
 	m_beamSweepParams.m_codebook = LoadCodebookFile(rxFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
@@ -214,8 +211,8 @@ MmWaveBeamManagement::AddEnbSinr (Ptr<NetDevice> enbNetDevice, uint16_t enbBeamI
 		m2.insert(make_pair(key,sinr));
 		m_enbSinrMap.insert(make_pair(enbNetDevice,m2));
 	}
-//	std::cout << Simulator::Now().GetNanoSeconds() << " " << enbBeamId << " " << ueBeamId << " "
-//			<< Sum(sinr)/sinr.GetSpectrumModel()->GetNumBands() << std::endl;
+	std::cout << Simulator::Now().GetNanoSeconds() << " " << enbBeamId << " " << ueBeamId << " "
+			<< Sum(sinr)/sinr.GetSpectrumModel()->GetNumBands() << std::endl;
 
 }
 
