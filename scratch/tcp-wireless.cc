@@ -133,6 +133,10 @@ main (int argc, char *argv[])
 	float speed = 1.0;
 	unsigned los_profile = 0;	//select the LOS situation: 0=only LOS, 1=LOS-NLOS-LOS
 	unsigned seed = 0;
+  	uint16_t nFlows = 1;
+  	std::string sWalk = "linear";
+  	float distance = 20;
+
 
 	CommandLine cmd;
 //	cmd.AddValue("numEnb", "Number of eNBs", numEnb);
@@ -150,6 +154,10 @@ main (int argc, char *argv[])
 	cmd.AddValue("speed","UE speed",speed);
 	cmd.AddValue("obstacle","LOS condition profile",los_profile);
 	cmd.AddValue("seed", "Simulation run seed", seed);
+	cmd.AddValue("flows", "Number of TCP flows per user", nFlows);
+	cmd.AddValue("walk", "Type of walk (linear or circular)",sWalk);
+	cmd.AddValue("distance", "gNB-UE distance (radius in circular walk)", distance);
+
 
 	cmd.Parse(argc, argv);
 
@@ -285,6 +293,11 @@ main (int argc, char *argv[])
 	else
 	{
 		NS_LOG_ERROR("Unsupported or unrecognized SS periodicity. Choose among ms5, ms10, ms20, ms40, ms80 or ms160");
+	}
+
+	if (sWalk != "linear" && sWalk != "circular")
+	{
+		NS_LOG_ERROR("Unsupported or unrecognized UE walk. Choose linear or circular");
 	}
 
 	/*
@@ -510,16 +523,34 @@ main (int argc, char *argv[])
 	BuildingsHelper::Install (mmWaveEnbNodes);
 
 	MobilityHelper uemobility;
-  Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
-  uePositionAlloc->Add (Vector (-80.0, -50.0, hUT));
 
+	if (sWalk == "linear")
+	{
 
-//  uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  uemobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
-  uemobility.SetPositionAllocator(uePositionAlloc);
-  uemobility.Install (ueNodes);
-//  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (60, -20, hUT));
-  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (speed, 0, 0));
+	  Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
+	  uePositionAlloc->Add (Vector (-80.0, -50.0, hUT));
+
+	//  uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+		uemobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
+	//  uemobility.SetMobilityModel ("ns3::CircularWay");
+		uemobility.SetPositionAllocator(uePositionAlloc);
+		uemobility.Install (ueNodes);
+	//  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (60, -20, hUT));
+		ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (speed, 0, 0));
+	}
+	else if (sWalk == "circular")
+	{
+
+		uemobility.SetMobilityModel ("ns3::CircularWay");
+		Config::SetDefault ("ns3::CircularWay::Radius",DoubleValue(distance));
+		Config::SetDefault ("ns3::CircularWay::Speed",DoubleValue (speed));
+		double theta = M_PI/2 - (speed/distance)/2;
+		Config::SetDefault ("ns3::CircularWay::Theta",DoubleValue (theta));
+		uemobility.Install (ueNodes);
+		ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (distance, 0, hUT));
+
+		simStopTime = 2 * M_PI * distance / speed; // Ensure that a 360º walk is done in the sim time
+	}
 
   BuildingsHelper::Install (ueNodes);
 	// Install LTE Devices to the nodes
@@ -544,10 +575,11 @@ main (int argc, char *argv[])
 
   mmwaveHelper->EnableTraces();
 
-
-	ApplicationContainer sourceApps;
-	ApplicationContainer sinkApps;
+	ApplicationContainer sourceApps [nFlows];
+	ApplicationContainer sinkApps [nFlows];
 	uint16_t sinkPort = 20000;
+
+
 
 
 
@@ -559,34 +591,41 @@ main (int argc, char *argv[])
 		ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), 1);
 
 		// Install and start applications on UEs and remote host
-		PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), sinkPort));
-		sinkApps.Add (packetSinkHelper.Install (ueNodes.Get (i)));
+//		PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), sinkPort));
+//		sinkApps.Add (packetSinkHelper.Install (ueNodes.Get (i)));
+		for(unsigned int f = 0; f < nFlows; f++){
+			PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), sinkPort));
+			sinkApps[f].Add (packetSinkHelper.Install (ueNodes.Get (i)));
+			sinkApps[f].Start(Seconds(0.));
+			sinkApps[f].Stop(Seconds(simStopTime));
 
 
+			BulkSendHelper ftp ("ns3::TcpSocketFactory",
+									 InetSocketAddress (ueIpIface.GetAddress (i), sinkPort));
+			sourceApps[f].Add (ftp.Install (remoteHostContainer.Get (i)));
 
+			std::ostringstream fileName;
+			fileName<<protocol+"-"+std::to_string(bufferSize)+"-"+std::to_string(packetSize)+"-"+std::to_string(p2pDelay)<<"-"<<i+1<<"-"<<f+1<<"-TCP-DATA.txt";
 
-		BulkSendHelper ftp ("ns3::TcpSocketFactory",
-		                         InetSocketAddress (ueIpIface.GetAddress (i), sinkPort));
-		sourceApps.Add (ftp.Install (remoteHostContainer.Get (i)));
+			AsciiTraceHelper asciiTraceHelper;
 
-	    std::ostringstream fileName;
-	    fileName<<protocol+"-"+std::to_string(bufferSize)+"-"+std::to_string(packetSize)+"-"+std::to_string(p2pDelay)<<"-"<<i+1<<"-TCP-DATA.txt";
+			Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream (fileName.str ().c_str ());
+//			sinkApps.Get(i)->TraceConnectWithoutContext("Rx",MakeBoundCallback (&Rx, stream));
+			sinkApps[f].Get(i)->TraceConnectWithoutContext("Rx",MakeBoundCallback (&Rx, stream));
 
-		AsciiTraceHelper asciiTraceHelper;
+			sourceApps[f].Get(i)->SetStartTime(Seconds (0.1+0.01*f));
+			Simulator::Schedule (Seconds (0.1001+0.01*f), &Traces, i, protocol+"-"+std::to_string(bufferSize)+"-"+std::to_string(packetSize)+"-"+std::to_string(p2pDelay)+"-"+std::to_string(f+1));
+			//sourceApps.Get(i)->SetStopTime (Seconds (10-1.5*i));
+			sourceApps[f].Get(i)->SetStopTime (Seconds (simStopTime));
 
-		Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream (fileName.str ().c_str ());
-		sinkApps.Get(i)->TraceConnectWithoutContext("Rx",MakeBoundCallback (&Rx, stream));
-	    sourceApps.Get(i)->SetStartTime(Seconds (0.1+0.01*i));
-	    Simulator::Schedule (Seconds (0.1001+0.01*i), &Traces, i, protocol+"-"+std::to_string(bufferSize)+"-"+std::to_string(packetSize)+"-"+std::to_string(p2pDelay));
-	    //sourceApps.Get(i)->SetStopTime (Seconds (10-1.5*i));
-	    sourceApps.Get(i)->SetStopTime (Seconds (simStopTime));
+			sinkPort+=2;
 
-		sinkPort++;
+		}
 
 	}
 
-	sinkApps.Start (Seconds (0.));
-	sinkApps.Stop (Seconds (simStopTime));
+//	sinkApps.Start (Seconds (0.));
+//	sinkApps.Stop (Seconds (simStopTime));
     //sourceAppsUL.Start (Seconds (0.1));
     //sourceApps.Stop (Seconds (simStopTime));
 

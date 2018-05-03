@@ -387,9 +387,12 @@ AntennaArrayModel::GetAntennaLocation(uint8_t index, uint8_t* antennaNum)
 	//assume the left bottom corner is (0,0,0), and the rectangular antenna array is on the y-z plane.
 	Vector loc;
 	loc.x = 0;
+	// Beam index grows horizontally first
 	loc.y = m_disH* (index % antennaNum[0]);
-//	loc.z = m_disV* (index / antennaNum[1]);
 	loc.z = m_disV* floor(index / antennaNum[0]);
+//	// Beam index grow vertically first
+//	loc.y = m_disH* floor(index / antennaNum[1]); //(index % antennaNum[1]);
+//	loc.z = m_disV* (index % antennaNum[1]);
 	return loc;
 }
 

@@ -63,8 +63,8 @@ MmWaveUePhy::MmWaveUePhy (Ptr<MmWaveSpectrumPhy> dlPhy, Ptr<MmWaveSpectrumPhy> u
 	Simulator::ScheduleNow (&MmWaveUePhy::SubframeIndication, this, 0, 0);
 	m_csiReportCounter = 5;
 	m_currentState = CELL_SEARCH;
-	m_bestTxBeamId = 0;
-	m_bestRxBeamId = 0;
+	m_bestTxBeamId = 65000;
+	m_bestRxBeamId = 65000;
 }
 
 MmWaveUePhy::~MmWaveUePhy ()
@@ -759,17 +759,17 @@ MmWaveUePhy::StartSsBlockSlot()
 
 	//						AttachToSelectedEnb
 						}
-						else
+//						else
 						{
 							//TODO: Attach to the eNB if it is a different one
 	//						Simulator::Schedule (MicroSeconds(3*100), &MmWaveSpectrumPhy::UpdateSinrPerceived,
 	//																	 enbDev->GetPhy()->GetDlSpectrumPhy (), specVals);
 							Ptr<MmWaveEnbNetDevice> enb =
-									DynamicCast<MmWaveEnbNetDevice>(m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice);
+									DynamicCast<MmWaveEnbNetDevice>(bestBeams.m_targetNetDevice);
 	//						Simulator::Schedule (NanoSeconds(1), &MmWaveSpectrumPhy::UpdateSinrPerceived,
 	//								(enb->GetPhy()->GetDlSpectrumPhy(),m_beamManagement->GetBestScannedBeamPair().m_sinrPsd));
-							enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
-							GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
+							enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(bestBeams.m_sinrPsd);
+							GetDlSpectrumPhy()->UpdateSinrPerceived(bestBeams.m_sinrPsd);
 	//						SetCurrentState(SYNCHRONIZED);
 						}
 					}
@@ -829,17 +829,17 @@ MmWaveUePhy::StartSsBlockSlot()
 
 //						AttachToSelectedEnb
 					}
-					else
+//					else
 					{
 						//TODO: Attach to the eNB if it is a different one
 //						Simulator::Schedule (MicroSeconds(3*100), &MmWaveSpectrumPhy::UpdateSinrPerceived,
 //																	 enbDev->GetPhy()->GetDlSpectrumPhy (), specVals);
 						Ptr<MmWaveEnbNetDevice> enb =
-								DynamicCast<MmWaveEnbNetDevice>(m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice);
+								DynamicCast<MmWaveEnbNetDevice>(bestBeams.m_targetNetDevice);
 //						Simulator::Schedule (NanoSeconds(1), &MmWaveSpectrumPhy::UpdateSinrPerceived,
 //								(enb->GetPhy()->GetDlSpectrumPhy(),m_beamManagement->GetBestScannedBeamPair().m_sinrPsd));
-						enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
-						GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
+						enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(bestBeams.m_sinrPsd);
+						GetDlSpectrumPhy()->UpdateSinrPerceived(bestBeams.m_sinrPsd);
 //						SetCurrentState(SYNCHRONIZED);
 					}
 				}
@@ -874,8 +874,8 @@ MmWaveUePhy::StartSsBlockSlot()
 				// next iteration
 				rxBeamId++;
 			}
-			uint16_t txBeamId = m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate();
-			if (txBeamId == m_phyMacConfig->GetSsBlockPatternLength()-1)	//FIXME: Implement a method to obtain the codebook length
+//			uint16_t txBeamId = m_beamManagement->GetNumBlocksSinceLastBeamSweepUpdate();
+//			if (txBeamId == m_phyMacConfig->GetSsBlockPatternLength()-1)	//FIXME: Implement a method to obtain the codebook length
 			{
 				m_beamManagement->UpdateBestScannedEnb();
 				bestBeams = m_beamManagement->GetBestScannedBeamPair();
@@ -893,14 +893,14 @@ MmWaveUePhy::StartSsBlockSlot()
 						AttachToSelectedEnb(m_netDevice,bestBeams.m_targetNetDevice);
 						SetCurrentState(SYNCHRONIZED);	// This is called in RegisterToEnb method
 					}
-					else
+//					else
 					{
 						Ptr<MmWaveEnbNetDevice> enb =
-								DynamicCast<MmWaveEnbNetDevice>(m_beamManagement->GetBestScannedBeamPair().m_targetNetDevice);
+								DynamicCast<MmWaveEnbNetDevice>(bestBeams.m_targetNetDevice);
 //						Simulator::Schedule (NanoSeconds(1), &MmWaveSpectrumPhy::UpdateSinrPerceived,
 //								(enb->GetPhy()->GetDlSpectrumPhy(),m_beamManagement->GetBestScannedBeamPair().m_sinrPsd));
-						enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
-						GetDlSpectrumPhy()->UpdateSinrPerceived(m_beamManagement->GetBestScannedBeamPair().m_sinrPsd);
+						enb->GetPhy()->GetDlSpectrumPhy()->UpdateSinrPerceived(bestBeams.m_sinrPsd);
+						GetDlSpectrumPhy()->UpdateSinrPerceived(bestBeams.m_sinrPsd);
 						//TODO: Attach to the eNB if it is a different one
 					}
 					// Reset counter: this is now scheduled every SS burst set period. See MmWaveUePhy::DoInitialize()

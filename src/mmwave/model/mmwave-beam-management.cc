@@ -49,6 +49,11 @@ MmWaveBeamManagement::MmWaveBeamManagement()
 
 MmWaveBeamManagement::~MmWaveBeamManagement()
 {
+	std::map< Ptr<NetDevice>, std::map <sinrKey,SpectrumValue>>::iterator it1;
+	for (it1 = m_enbSinrMap.begin(); it1 != m_enbSinrMap.end(); ++it1)
+	{
+		it1->second.clear();
+	}
 	m_enbSinrMap.clear();
 }
 
@@ -70,6 +75,7 @@ MmWaveBeamManagement::InitializeBeamSweepingTx(Time beamChangeTime)
 
 //	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/TxCodebook.txt";
 	std::string txFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook16h4v.txt";
+//	std::string txFilePath = "../InputFiles/KronCodebook16h4v.txt";
 
 	m_beamSweepParams.m_codebook = LoadCodebookFile(txFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
@@ -86,6 +92,7 @@ MmWaveBeamManagement::InitializeBeamSweepingRx(Time beamChangeTime)
 
 //	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/RxCodebook.txt";
 	std::string rxFilePath = "src/mmwave/model/BeamFormingMatrix/KronCodebook8h2v.txt";
+//	std::string rxFilePath = "../InputFiles/KronCodebook8h2v.txt";
 
 	m_beamSweepParams.m_codebook = LoadCodebookFile(rxFilePath);
 	this->SetBeamChangeInterval(beamChangeTime);
